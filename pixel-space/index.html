@@ -4,15 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Pixel Space</title>
-<meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Pixel Space">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root{
   --display:'Syne','Helvetica Neue',Arial,sans-serif;
@@ -25,7 +29,7 @@
 }
 *{box-sizing:border-box}
 [hidden]{display:none !important}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:400 1rem/1.5 var(--text)}
+html,body{margin:0;height:100%;width:100%;overflow-x:hidden;overscroll-behavior-x:none;background:var(--bg);color:var(--ink);font:400 1rem/1.5 var(--text)}
 button{font-family:inherit;color:inherit}
 :focus-visible{outline:2px solid #fff;outline-offset:2px}
 
@@ -34,31 +38,39 @@ button{font-family:inherit;color:inherit}
 
 @media (min-width:560px){
   body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0c0c0c}
-  .app{height:min(860px,94dvh);border-radius:32px;border-color:var(--line2);box-shadow:0 40px 100px rgba(0,0,0,.55)}
+  .app{width:clamp(420px,38vw,720px);max-width:none;height:min(920px,94dvh);border-radius:32px;border-color:var(--line2);box-shadow:0 40px 100px rgba(0,0,0,.55)}
 }
 
 /* ---------- Artland view ---------- */
-#view-artland{display:grid;grid-template-rows:52px minmax(0,1fr) auto}
+#view-artland{display:grid;grid-template-rows:auto minmax(0,1fr) auto}
 
-.top{display:flex;align-items:center;justify-content:space-between;padding:0 14px}
-.brand{display:flex;align-items:center;gap:8px;font:800 1.0625rem/1 var(--display);letter-spacing:-.01em}
-.seg{display:flex;gap:4px}
-.seg button{min-height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--ink);background:transparent;color:var(--ink);font-size:.875rem;font-weight:500;cursor:pointer}
+.top{display:flex;align-items:center;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top)) 16px 0;min-width:0}
+.brand{display:flex;align-items:center;gap:8px;font:800 1.0625rem/1 var(--display);letter-spacing:-.01em;min-width:0;flex-shrink:0}
+.seg{display:flex;gap:2px;width:max-content;margin:2px auto 0;padding:3px;border-radius:999px;background:var(--line2);border:1px solid var(--line)}
+.seg button{min-height:32px;padding:0 20px;border-radius:999px;border:0;background:transparent;color:var(--sub);font-size:.875rem;font-weight:500;cursor:pointer;transition:background .15s ease,color .15s ease}
 .seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.segWrap{max-height:56px;opacity:1;transform:translateY(0);overflow:hidden;transition:max-height .28s ease,opacity .2s ease,transform .28s ease}
+#artlandHeader.segHidden .segWrap{max-height:0;opacity:0;transform:translateY(-10px)}
 
-.feed{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding:10px 12px 4px}
+.feed{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;overscroll-behavior-x:none;touch-action:pan-y;scrollbar-width:none;padding:10px 12px 4px;width:100%}
 .feed::-webkit-scrollbar{display:none}
-.piece{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
-.art{position:relative;width:min(calc(100vw - 24px),420px);margin:0 auto;aspect-ratio:4/5;border-radius:10px;overflow:hidden;background:#0a0a0a;border:1px solid #1c1c1c;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+.piece{display:flex;flex-direction:column;gap:8px;margin:0 auto 22px;width:100%;max-width:420px;min-width:0}
+.art{position:relative;width:100%;max-width:100%;aspect-ratio:4/5;border-radius:10px;overflow:hidden;background:#3a3a3a;border:1px solid rgba(255,255,255,.08);box-shadow:0 2px 14px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;touch-action:manipulation}
 .art img{width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
 .pop{position:absolute;left:50%;top:50%;width:96px;height:96px;margin:-48px 0 0 -48px;color:#fff;pointer-events:none;opacity:0}
 .pop.go{animation:pop .7s ease-out}
 @keyframes pop{0%{opacity:0;transform:scale(.4)}25%{opacity:1;transform:scale(1.1)}100%{opacity:0;transform:scale(1.3)}}
+.zoomBtn{position:absolute;right:8px;top:8px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.45);border:0;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2}
+.zoomBtn svg{width:18px;height:18px}
 
-.meta{display:flex;align-items:center;justify-content:space-between;min-height:44px}
-.who{font-weight:500}
+.meta{display:flex;align-items:center;justify-content:space-between;min-height:44px;gap:8px;max-width:100%}
+.metaLeft{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.pieceAvatar{width:32px;height:32px;border-radius:50%;overflow:hidden;flex:none;background:var(--line2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+.pieceAvatar img{width:100%;height:100%;object-fit:cover;display:block}
+.pieceAvatar span{font:700 .8125rem/1 var(--display);color:var(--sub)}
+.who{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .who span{color:var(--sub);font-weight:400;margin-left:8px;font-size:.9375rem}
-.acts{display:flex;gap:6px}
+.acts{display:flex;gap:2px;flex-shrink:0}
 .act{display:flex;align-items:center;gap:6px;min-height:44px;min-width:44px;padding:0 10px;border:0;background:transparent;cursor:pointer;font-size:.9375rem}
 .act svg{width:24px;height:24px}
 .act[aria-pressed=true] svg path{fill:currentColor}
@@ -81,7 +93,7 @@ button{font-family:inherit;color:inherit}
 .sheet header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
 .sheet h2{margin:0;font:700 1.0625rem/1 var(--display)}
 .close{min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);cursor:pointer;font-size:.875rem}
-.clist{list-style:none;margin:0;padding:0 16px;overflow-y:auto;flex:1}
+.clist{list-style:none;margin:0;padding:0 16px;overflow-y:auto;overflow-x:hidden;flex:1}
 .clist li{padding:10px 0;border-top:1px solid var(--line)}
 .clist b{font-weight:500;margin-right:8px}
 .clist .none{color:var(--sub);border-top:0}
@@ -91,18 +103,65 @@ button{font-family:inherit;color:inherit}
 .cerr{flex-basis:100%;margin:0;font-size:.875rem;min-height:1.2em;color:var(--ink)}
 .toast{position:absolute;left:50%;bottom:76px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:.875rem;font-weight:500;z-index:30;white-space:nowrap}
 
+.lightbox{position:absolute;inset:0;background:#000;z-index:40;display:flex}
+.lbStage{width:100%;height:100%;display:flex;align-items:center;justify-content:center;touch-action:none;overflow:hidden}
+.lbStage img{max-width:100%;max-height:100%;-webkit-user-drag:none;user-select:none;-webkit-user-select:none}
+.lbClose{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.15);color:#fff;font-size:1.1rem;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2}
+.lbHint{position:absolute;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom));text-align:center;color:rgba(255,255,255,.6);font-size:.8125rem;pointer-events:none}
+
+.tutorial{position:absolute;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:22px;padding:32px 28px calc(30px + env(safe-area-inset-bottom))}
+.cameraView{position:absolute;inset:0;z-index:55;background:#000;display:flex;overflow:hidden}
+.cameraView video{width:100%;height:100%;object-fit:cover;background:#000}
+.camTop{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:calc(12px + env(safe-area-inset-top)) 14px 0;z-index:2}
+.camRound{width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.camRound:active{background:rgba(255,255,255,.3)}
+.camErr{position:absolute;left:16px;right:16px;bottom:130px;margin:0;background:rgba(0,0,0,.75);color:#fff;padding:10px 14px;border-radius:10px;font-size:.875rem;text-align:center;z-index:2}
+.camBottom{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:0 16px calc(26px + env(safe-area-inset-bottom));z-index:2}
+.camShutter{width:70px;height:70px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.22);cursor:pointer;padding:0}
+.camShutter:active{background:rgba(255,255,255,.45)}
+.tutSkip{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;min-height:36px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--sub);font-size:.8125rem;cursor:pointer}
+.tutBody h2{margin:0 0 10px;font:800 1.875rem/1.15 var(--display);letter-spacing:-.02em;max-width:16ch}
+.tutBody p{margin:0;color:var(--sub);font-size:1.0625rem;line-height:1.5;max-width:30ch}
+.tutDots{display:flex;gap:6px}
+.tutDots span{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.tutDots span.on{background:var(--ink)}
+.tutNav{display:flex;gap:10px;width:100%}
+.tutNav .pill--solid{flex:1;min-height:50px}
+
+.chat{position:absolute;inset:0;z-index:45;background:var(--panel);display:flex;flex-direction:column}
+.chatList{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 0}
+.chatEmpty{margin:0;padding:32px 24px;color:var(--sub);font-size:.9375rem;text-align:center}
+.chatRow{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:12px 16px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.chatRowName{font-weight:600;display:flex;align-items:center;gap:6px}
+.chatDot{width:8px;height:8px;border-radius:50%;background:#ff3b30;display:inline-block}
+.chatRowPreview{color:var(--sub);font-size:.875rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chatThread{flex:1;display:flex;flex-direction:column;min-height:0}
+.chatMsgs{list-style:none;margin:0;padding:12px 16px;overflow-y:auto;overflow-x:hidden;flex:1;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:78%;padding:9px 13px;border-radius:16px;font-size:.9375rem;line-height:1.4;word-break:break-word}
+.msg.them{align-self:flex-start;background:var(--line);border-bottom-left-radius:4px}
+.msg.me{align-self:flex-end;background:var(--ink);color:var(--bg);border-bottom-right-radius:4px}
+.msgTime{display:block;margin-top:3px;font-size:.6875rem;opacity:.6}
+.top--stack{flex-direction:column;align-items:stretch;gap:12px;padding-bottom:12px}
+.topRow1{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
+.seg{align-self:center}
+.chatPill{gap:6px;flex:none;flex-shrink:0}
+
 @media (prefers-reduced-motion:reduce){
   .pop.go{animation:none;opacity:1}
   .motion-spin,.motion-pulse,.motion-bounce,.motion-wiggle{animation:none}
 }
 
 /* ---------- Studio view ---------- */
-#view-studio{display:flex;flex-direction:column;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#view-studio{display:flex;flex-direction:column;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:56px;padding:10px 14px;flex:none;position:sticky;top:0;background:var(--panel);z-index:5}
 .bar .brand{flex:1;min-width:0;text-align:center;justify-content:center;font-size:1.0625rem}
 .pill{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 18px;border-radius:999px;border:1px solid var(--ink);background:transparent;color:var(--ink);font-size:.9375rem;font-weight:500;text-decoration:none;cursor:pointer}
 .pill:active{transform:scale(.98)}
 .pill--solid{background:var(--ink);color:var(--bg)}
+.quotabar{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:0 14px 8px;font-size:.8125rem;color:var(--sub);text-align:center}
+.quotaHint{flex-basis:100%;font-size:.75rem;opacity:.8}
+.quotabar.low span:not(.quotaHint){color:#ff3b30}
+.tools .pill[aria-pressed=true]{background:var(--ink);color:var(--bg)}
 
 #view-studio main{display:flex;justify-content:center;align-items:center;padding:16px 12px}
 #cv{--cw:min(calc(100vw - 24px),420px);--u:calc(var(--cw) / 100);position:relative;width:var(--cw);aspect-ratio:4 / 5;background:#161616;border-radius:6px;overflow:hidden;touch-action:pan-y}
@@ -113,6 +172,10 @@ button{font-family:inherit;color:inherit}
 .it:active{cursor:grabbing}
 .it.on{outline:1px dashed #888;outline-offset:calc(var(--u) * 1)}
 .it.multi{outline:2px solid #f4f4f4;outline-offset:calc(var(--u) * 1)}
+.it.grp{outline:1px dashed #666;outline-offset:calc(var(--u) * 1)}
+.guide{position:absolute;background:#ff3b30;pointer-events:none;z-index:999}
+.guide.v{width:1px;top:0;bottom:0}
+.guide.h{height:1px;left:0;right:0}
 .it img,.it video{display:block;max-width:none;pointer-events:none;-webkit-user-drag:none}
 .rs{display:none;position:absolute;left:100%;top:100%;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:#f4f4f4;border:2px solid #000;box-shadow:0 0 0 1px #f4f4f4;touch-action:none;cursor:nwse-resize;z-index:2}
 .it.on .rs{display:block}
@@ -121,6 +184,11 @@ button{font-family:inherit;color:inherit}
 .s1{width:calc(var(--u) * 22);height:calc(var(--u) * 22);background:#9a9a9a}
 .s2{width:calc(var(--u) * 28);height:calc(var(--u) * 24);background:var(--fg);clip-path:polygon(50% 0,100% 100%,0 100%)}
 .s3{width:calc(var(--u) * 26);height:calc(var(--u) * 26);border-radius:50%;border:calc(var(--u) * 2.6) solid var(--fg)}
+.vn{width:calc(var(--u) * 26);height:calc(var(--u) * 26);border-radius:50%;background:var(--fg);display:flex;align-items:center;justify-content:center;position:relative}
+.vn svg{width:46%;height:46%;color:var(--bg)}
+.vn::after{content:attr(data-dur);position:absolute;top:104%;left:50%;transform:translateX(-50%);font:500 calc(var(--u) * 3.2)/1 var(--text);color:var(--sub);white-space:nowrap}
+@keyframes vnpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.vn.playing{animation:vnpulse .9s ease-in-out infinite}
 
 .dock{background:var(--panel);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));flex:none}
 .sel{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
@@ -167,9 +235,10 @@ button{font-family:inherit;color:inherit}
 #msg{margin:8px 0 0;min-height:1.4em;font-size:.875rem;color:var(--sub)}
 
 /* ---------- You view ---------- */
-#view-you{display:grid;grid-template-rows:52px minmax(0,1fr) auto}
+#view-you{display:grid;grid-template-rows:calc(52px + env(safe-area-inset-top)) minmax(0,1fr) auto}
 .ycard{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 0 22px}
-.yavatar{width:92px;height:92px;border-radius:22px;overflow:hidden;background:#111;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex:none}
+.yavatar{width:92px;height:92px;border-radius:22px;overflow:hidden;background:#111;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex:none;padding:0;cursor:pointer;position:relative}
+.yavatar::after{content:'✎';position:absolute;right:-2px;bottom:-2px;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--bg);font-size:.75rem;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
 .yavatar img{width:100%;height:100%;object-fit:cover}
 .yavatar span{font:800 1.5rem/1 var(--display);color:var(--sub)}
 .ynamerow{display:flex;align-items:center;gap:8px}
@@ -182,7 +251,7 @@ button{font-family:inherit;color:inherit}
 .ystat span{font-size:.75rem;color:var(--sub)}
 .ysection{padding:0 14px 22px}
 .ysection>.ylabel{font-size:.8125rem;color:var(--sub);margin-bottom:8px}
-.yland{position:relative;width:100%;aspect-ratio:4/5;border-radius:10px;overflow:hidden;background:#0a0a0a;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center}
+.yland{position:relative;width:100%;aspect-ratio:4/5;border-radius:10px;overflow:hidden;background:#3a3a3a;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center}
 .yland img{width:100%;height:100%;object-fit:cover}
 .yland p{margin:0;padding:24px;text-align:center;color:var(--sub);font-size:.9375rem}
 .ylist{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
@@ -193,21 +262,49 @@ button{font-family:inherit;color:inherit}
 .ytoggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--ink);transition:transform .15s ease}
 .ytoggle[aria-checked=true]{background:var(--ink)}
 .ytoggle[aria-checked=true]::after{background:var(--bg);transform:translateX(18px)}
+
+/* ---------- Splash (rolls up like a garage door) ---------- */
+#splash{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;clip-path:inset(0 0 0% 0)}
+#splash::before{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(to bottom, rgba(255,255,255,.06) 0 1px, transparent 1px 22px);pointer-events:none}
+#splash .smark{display:flex;align-items:center;gap:10px;font:800 1.875rem/1 var(--display);letter-spacing:-.02em;color:#f4f4f4}
+#splash .smark svg{width:28px;height:28px}
+#splash .stag{color:#8a8a8a;font-size:.9375rem;font-family:var(--text)}
+#splash.rollup{animation:doorRoll .95s cubic-bezier(.6,0,.15,1) forwards}
+@keyframes doorRoll{
+  0%{clip-path:inset(0 0 0% 0)}
+  60%{clip-path:inset(0 0 58% 0)}
+  100%{clip-path:inset(0 0 100% 0)}
+}
+@media (prefers-reduced-motion:reduce){
+  #splash.rollup{animation:none;clip-path:inset(0 0 100% 0)}
+}
 </style>
 </head>
 <body>
+<div id="splash" aria-hidden="true">
+  <span class="smark">
+    <svg viewBox="0 0 22 22" aria-hidden="true"><rect width="10" height="10" fill="currentColor"/><rect x="12" width="10" height="10" fill="currentColor"/><rect y="12" width="10" height="10" fill="currentColor"/><rect x="12" y="12" width="10" height="10" fill="currentColor" opacity=".4"/></svg>
+    Pixel Space
+  </span>
+  <span class="stag">the colourful space for the random guy</span>
+</div>
 <div class="app" id="app">
 
   <!-- ============ Artland ============ -->
   <div class="view" id="view-artland">
-    <header class="top">
-      <span class="brand">
-        <svg width="18" height="18" viewBox="0 0 22 22" aria-hidden="true"><rect width="10" height="10" fill="currentColor"/><rect x="12" width="10" height="10" fill="currentColor"/><rect y="12" width="10" height="10" fill="currentColor"/><rect x="12" y="12" width="10" height="10" fill="currentColor" opacity=".4"/></svg>
-        Artland
-      </span>
-      <div class="seg" role="group" aria-label="Whose art to show">
-        <button id="m-all" type="button" aria-pressed="true">Everyone</button>
-        <button id="m-fr" type="button" aria-pressed="false">Friends</button>
+    <header class="top top--stack" id="artlandHeader">
+      <div class="topRow1">
+        <span class="brand">
+          <svg width="18" height="18" viewBox="0 0 22 22" aria-hidden="true"><rect width="10" height="10" fill="currentColor"/><rect x="12" width="10" height="10" fill="currentColor"/><rect y="12" width="10" height="10" fill="currentColor"/><rect x="12" y="12" width="10" height="10" fill="currentColor" opacity=".4"/></svg>
+          Artland
+        </span>
+        <button class="pill chatPill" id="msgBtnArtland" type="button" aria-label="Messages">Chat<span class="chatDot" id="msgDotArtland" hidden></span></button>
+      </div>
+      <div class="segWrap">
+        <div class="seg" role="group" aria-label="Whose art to show">
+          <button id="m-all" type="button" aria-pressed="true">Everyone</button>
+          <button id="m-fr" type="button" aria-pressed="false">Friends</button>
+        </div>
       </div>
     </header>
 
@@ -235,10 +332,16 @@ button{font-family:inherit;color:inherit}
       <span class="brand">Studio</span>
       <button class="pill pill--solid" id="save" type="button">Post</button>
     </header>
+    <div class="quotabar" id="quotabar" aria-live="polite">
+      <span id="quotaAdds">20 to add</span>
+      <span class="quotaHint" id="quotaHint" hidden>Day one only — 5 to add per day after today. Delete as much as you like.</span>
+    </div>
 
     <main>
       <div id="cv" role="group" aria-label="Canvas. Drag items to move them.">
         <div id="ph"><strong>Drop your first thing here</strong><span>Add a photo, a shape, or some text below.</span></div>
+        <div class="guide v" id="guideV" hidden aria-hidden="true"></div>
+        <div class="guide h" id="guideH" hidden aria-hidden="true"></div>
       </div>
     </main>
 
@@ -293,14 +396,29 @@ button{font-family:inherit;color:inherit}
       <div class="tools">
         <label class="pill" for="pick">Photo</label>
         <input id="pick" type="file" accept="image/*" multiple>
+        <button class="pill" id="camBtn" type="button">Camera</button>
         <label class="pill" for="pickV">Video</label>
         <input id="pickV" type="file" accept="video/*" multiple>
         <button class="pill" id="addS" type="button" aria-expanded="false">Shapes</button>
         <button class="pill" id="addT" type="button">Text</button>
+        <button class="pill" id="addV" type="button" aria-pressed="false">Voice</button>
         <button class="pill" id="bgT" type="button">Background</button>
+        <button class="pill" id="snapT" type="button" aria-pressed="true">Snap</button>
         <button class="pill" id="selMulti" type="button" aria-pressed="false">Select</button>
       </div>
       <p id="msg" aria-live="polite"></p>
+    </div>
+
+    <div class="cameraView" id="cameraView" hidden>
+      <video id="camVideo" autoplay playsinline muted></video>
+      <div class="camTop">
+        <button class="camRound" id="camClose" type="button" aria-label="Close camera">&#10005;</button>
+        <button class="camRound" id="camFlip" type="button" aria-label="Switch camera">&#8635;</button>
+      </div>
+      <p class="camErr" id="camErr" hidden></p>
+      <div class="camBottom">
+        <button class="camShutter" id="camShutter" type="button" aria-label="Take photo"></button>
+      </div>
     </div>
   </div>
 
@@ -308,11 +426,13 @@ button{font-family:inherit;color:inherit}
   <div class="view" id="view-you" hidden>
     <header class="top">
       <span class="brand">You</span>
+      <button class="pill chatPill" id="msgBtnYou" type="button" aria-label="Messages">Chat<span class="chatDot" id="msgDotYou" hidden></span></button>
     </header>
 
     <main class="feed" id="youBody">
       <div class="ycard">
-        <div class="yavatar" id="youAvatar"><span>?</span></div>
+        <button class="yavatar" id="youAvatar" type="button" aria-label="Change profile picture"><span>?</span></button>
+        <input id="avatarPick" type="file" accept="image/*" hidden>
         <div class="ynamerow" id="youNameRow">
           <span class="yname" id="youName">@you</span>
           <button class="pill" id="youEditName" type="button">Edit</button>
@@ -343,6 +463,9 @@ button{font-family:inherit;color:inherit}
           </li>
           <li>
             <button class="row" id="premiumRow" type="button"><span>Premium</span><span class="yhint">Coming soon</span></button>
+          </li>
+          <li>
+            <button class="row" id="howRow" type="button"><span>How Pixel Space works</span><span class="yhint">›</span></button>
           </li>
           <li>
             <button class="row" id="helpRow" type="button"><span>Help &amp; feedback</span><span class="yhint">›</span></button>
@@ -381,10 +504,161 @@ button{font-family:inherit;color:inherit}
     </form>
   </section>
   <div class="toast" id="toast" hidden></div>
+
+  <div class="lightbox" id="lightbox" hidden>
+    <button class="lbClose" id="lbClose" type="button" aria-label="Close">✕</button>
+    <div class="lbStage" id="lbStage">
+      <img id="lbImg" alt="" draggable="false">
+    </div>
+    <p class="lbHint">Pinch to zoom</p>
+  </div>
+
+  <div class="tutorial" id="tutorial" role="dialog" aria-modal="true" aria-label="How Pixel Space works" hidden>
+    <button class="tutSkip" id="tutSkip" type="button">Skip</button>
+    <div class="tutBody">
+      <h2 id="tutTitle"></h2>
+      <p id="tutText"></p>
+    </div>
+    <div class="tutDots" id="tutDots" aria-hidden="true"></div>
+    <div class="tutNav">
+      <button class="pill" id="tutBack" type="button" hidden>Back</button>
+      <button class="pill pill--solid" id="tutNext" type="button">Next</button>
+    </div>
+  </div>
+
+  <div class="chat" id="chat" role="dialog" aria-modal="true" aria-label="Messages" hidden>
+    <header class="bar">
+      <button class="pill" id="chatBack" type="button">Back</button>
+      <span class="brand" id="chatTitle">Messages</span>
+      <span style="width:64px" aria-hidden="true"></span>
+    </header>
+    <div class="chatList" id="chatList"></div>
+    <div class="chatThread" id="chatThread" hidden>
+      <ul class="chatMsgs" id="chatMsgs"></ul>
+      <form class="cform" id="chatForm">
+        <input id="chatInput" type="text" maxlength="1000" autocomplete="off" placeholder="Message…" aria-label="Message">
+        <button type="submit">Send</button>
+      </form>
+      <p class="cerr" id="chatErr" aria-live="polite"></p>
+    </div>
+  </div>
 </div>
 
 <script>
 var $ = function (id) { return document.getElementById(id); };
+
+/* ================= Backend (Supabase) ================= */
+var SUPABASE_URL = 'https://rqelujzxboaahebsymlj.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_lPy9_9z_aPZxDueoP-mGrQ_QnVZLmLY';
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var MEDIA_BUCKET = 'media';
+
+var me = null; // { id, username, avatar_path, avatarUrl }
+
+function publicUrl(path) {
+  if (!path) { return null; }
+  return sb.storage.from(MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+/* ================= Push notifications ================= */
+var VAPID_PUBLIC_KEY = 'BG6CegNDjsN8ZqpvsGVzzrEyoK_S4bCaq4yxBz3IfemDQKWqU2mLmcSyZZd__TT9w8EKeYbK8JX9btgNUC_wgoA';
+
+function pushSupported() {
+  return 'serviceWorker' in navigator && 'PushManager' in window;
+}
+
+function urlBase64ToUint8Array(base64String) {
+  var padding = '='.repeat((4 - base64String.length % 4) % 4);
+  var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  var raw = atob(base64);
+  var out = new Uint8Array(raw.length);
+  for (var i = 0; i < raw.length; i++) { out[i] = raw.charCodeAt(i); }
+  return out;
+}
+
+var swReg = null;
+function registerSW() {
+  if (!pushSupported()) { return Promise.resolve(null); }
+  return navigator.serviceWorker.register('sw.js').then(function (reg) {
+    swReg = reg;
+    return reg;
+  }).catch(function () { return null; });
+}
+
+function currentPushSubscription() {
+  if (!swReg) { return Promise.resolve(null); }
+  return swReg.pushManager.getSubscription();
+}
+
+function subKeys(sub) {
+  var json = sub.toJSON();
+  return { endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth };
+}
+
+async function enablePush() {
+  if (!pushSupported()) { showToast('Push notifications aren\u2019t supported on this browser.', 2400); return false; }
+  if (!swReg) { await registerSW(); }
+  if (!swReg) { showToast('Could not set up notifications.', 2200); return false; }
+
+  var perm = await Notification.requestPermission();
+  if (perm !== 'granted') { showToast('Notifications blocked in browser settings.', 2400); return false; }
+
+  var sub = await swReg.pushManager.getSubscription();
+  if (!sub) {
+    sub = await swReg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+  }
+  var keys = subKeys(sub);
+  var res = await sb.from('push_subscriptions').upsert({
+    user_id: me.id, endpoint: keys.endpoint, p256dh: keys.p256dh, auth: keys.auth
+  }, { onConflict: 'endpoint' });
+  if (res.error) { showToast('Could not save notification settings.', 2200); return false; }
+  return true;
+}
+
+async function disablePush() {
+  if (!swReg) { return true; }
+  var sub = await swReg.pushManager.getSubscription();
+  if (sub) {
+    var keys = subKeys(sub);
+    await sb.from('push_subscriptions').delete().eq('endpoint', keys.endpoint);
+    await sub.unsubscribe();
+  }
+  return true;
+}
+
+async function ensureSession() {
+  var got = await sb.auth.getSession();
+  var session = got.data && got.data.session;
+  if (!session) {
+    var signed = await sb.auth.signInAnonymously();
+    if (signed.error) { throw signed.error; }
+    session = signed.data.session;
+  }
+  return session.user;
+}
+
+async function loadProfile(userId) {
+  var res = await sb.from('profiles').select('id, username, avatar_path').eq('id', userId).single();
+  if (res.error) { throw res.error; }
+  return res.data;
+}
+
+async function initBackend() {
+  var user = await ensureSession();
+  var profile = null;
+  // The profile row is created by a DB trigger on signup; it can lag by a beat
+  // the very first time, so retry briefly instead of failing the boot.
+  for (var i = 0; i < 5 && !profile; i++) {
+    try { profile = await loadProfile(user.id); }
+    catch (e) { await new Promise(function (r) { setTimeout(r, 300); }); }
+  }
+  if (!profile) { throw new Error('Could not load profile.'); }
+  me = { id: profile.id, username: profile.username, avatar_path: profile.avatar_path, avatarUrl: publicUrl(profile.avatar_path) };
+  return me;
+}
 
 /* ================= View switching ================= */
 /* Studio pushes a history entry. The phone's back gesture then pops that
@@ -395,6 +669,7 @@ var YOU_STATE = 'you';
 history.replaceState({ view: 'artland' }, '');
 
 function renderArtland() {
+  closeCamera();
   $('view-studio').hidden = true;
   $('view-you').hidden = true;
   $('view-artland').hidden = false;
@@ -407,6 +682,7 @@ function renderStudio() {
   $('nav-artland').removeAttribute('aria-current');
 }
 function renderYou() {
+  closeCamera();
   $('view-artland').hidden = true;
   $('view-studio').hidden = true;
   $('view-you').hidden = false;
@@ -444,57 +720,45 @@ $('you-tab-artland').onclick = showArtland;
 $('you-tab-studio').onclick = showStudio;
 
 /* ================= Artland ================= */
-function svg(bg, inner) {
-  return 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 420"><rect width="300" height="420" fill="' + bg + '"/>' + inner + '</svg>');
-}
-var FONT = 'font-family="Arial Black,Arial,sans-serif" font-weight="900"';
-
-var bars = '';
-[180, 260, 120, 300, 210, 150].forEach(function (v, i) {
-  bars += '<rect x="' + (14 + i * 46) + '" y="' + (420 - v) + '" width="34" height="' + v + '" fill="' + (i % 2 ? '#777' : '#f4f4f4') + '"/>';
-});
-var chk = '';
-for (var r = 0; r < 7; r++) { for (var c = 0; c < 5; c++) { if ((r + c) % 2 === 0) { chk += '<rect x="' + c * 60 + '" y="' + r * 60 + '" width="60" height="60" fill="#000"/>'; } } }
-var strp = '';
-for (var i = 0; i < 7; i++) { strp += '<rect x="0" y="' + i * 60 + '" width="300" height="' + (i % 2 ? 20 : 40) + '" fill="' + (i % 3 ? '#f4f4f4' : '#777') + '"/>'; }
-var rings = '';
-[130, 100, 70, 40, 14].forEach(function (rad, i) { rings += '<circle cx="150" cy="210" r="' + rad + '" fill="none" stroke="' + (i % 2 ? '#777' : '#f4f4f4') + '" stroke-width="10"/>'; });
-
-var ART = {
-  hello: svg('#f4f4f4', '<text x="22" y="118" font-size="84" ' + FONT + ' fill="#000" transform="rotate(-6 22 118)">hello</text><circle cx="215" cy="255" r="65" fill="#000"/><rect x="34" y="250" width="90" height="90" fill="#9a9a9a" transform="rotate(12 79 295)"/><text x="22" y="372" font-size="14" font-family="Arial,sans-serif" fill="#000">day one. random on purpose.</text>'),
-  noise: svg('#111', bars + '<text x="20" y="66" font-size="44" ' + FONT + ' fill="#f4f4f4">noise</text><circle cx="242" cy="62" r="30" fill="none" stroke="#f4f4f4" stroke-width="4"/>'),
-  me: svg('#8a8a8a', chk + '<rect x="30" y="150" width="240" height="120" fill="#f4f4f4"/><text x="150" y="240" font-size="84" text-anchor="middle" ' + FONT + ' fill="#000">me?</text>'),
-  random: svg('#000', strp + '<rect x="60" y="120" width="170" height="150" fill="#f4f4f4" transform="rotate(-10 145 195)"/><text x="78" y="205" font-size="26" ' + FONT + ' fill="#000" transform="rotate(-10 78 205)">so random</text>'),
-  rest: svg('#000', rings + '<text x="150" y="392" font-size="30" text-anchor="middle" ' + FONT + ' fill="#f4f4f4">rest</text>'),
-  lol: svg('#f4f4f4', '<path d="M20 250 q30 -70 60 0 t60 0 t60 0 t60 0" fill="none" stroke="#000" stroke-width="10" stroke-linecap="round"/><circle cx="70" cy="120" r="14" fill="#000"/><circle cx="130" cy="120" r="14" fill="#000"/><path d="M60 170 q45 50 90 0" fill="none" stroke="#000" stroke-width="10" stroke-linecap="round"/><text x="150" y="360" font-size="60" text-anchor="middle" ' + FONT + ' fill="#000">lol</text>')
-};
-
 var pieces = [];
 var mode = 'all';
-
-var YOU_ID = 'you-primary';
-
-function loadMine() {
-  // Placeholder for the user's one persistent piece — their "land."
-  // Later: this goes away once Artland fetches this user's row from the Supabase pieces table.
-  var raw, saved;
-  try { raw = localStorage.getItem('ps_myspace'); } catch (e) { raw = null; }
-  try { saved = raw ? JSON.parse(raw) : null; } catch (e) { saved = null; }
-  if (!saved) { return []; }
-  return [{ id: YOU_ID, user: '@you', mins: 0, friend: true, likes: 0, liked: false, src: saved.src, alt: 'Your piece', comments: [] }];
-}
+var friendIds = {}; // set of user_ids I've added as friends
 
 async function loadPieces() {
-  // Later: fetch the newest rows from the Supabase pieces table instead of sample data.
-  var sample = [
-    { id: 1, user: '@noor', mins: 2, friend: true, likes: 12, liked: false, src: ART.hello, alt: 'A poster with the word hello, a black circle, and a grey square', comments: [{ u: '@kemi', t: 'day one already looks good' }] },
-    { id: 2, user: '@tolu', mins: 19, friend: false, likes: 48, liked: false, src: ART.noise, alt: 'A poster of white and grey bars with the word noise', comments: [] },
-    { id: 3, user: '@kemi', mins: 64, friend: true, likes: 7, liked: false, src: ART.me, alt: 'A checkerboard poster with a white box that says me with a question mark', comments: [{ u: '@noor', t: 'the question mark is doing a lot' }, { u: '@tolu', t: 'same' }] },
-    { id: 4, user: '@amaka', mins: 180, friend: false, likes: 31, liked: false, src: ART.random, alt: 'A striped poster with a tilted white square that says so random', comments: [] },
-    { id: 5, user: '@dayo', mins: 320, friend: false, likes: 22, liked: false, src: ART.rest, alt: 'Concentric grey and white rings with the word rest', comments: [] },
-    { id: 6, user: '@ife', mins: 700, friend: true, likes: 15, liked: false, src: ART.lol, alt: 'A doodled smiling face over a wavy line with the word lol', comments: [{ u: '@kemi', t: 'lol' }] }
-  ];
-  return loadMine().concat(sample).sort(function (a, b) { return a.mins - b.mins; });
+  var feedRes = await sb.from('pieces_feed').select('*').order('updated_at', { ascending: false });
+  if (feedRes.error) { throw feedRes.error; }
+  var rows = feedRes.data || [];
+
+  var myLikes = {};
+  if (rows.length) {
+    var likesRes = await sb.from('likes').select('piece_id').eq('user_id', me.id);
+    if (!likesRes.error) { (likesRes.data || []).forEach(function (l) { myLikes[l.piece_id] = true; }); }
+  }
+
+  var friendsRes = await sb.from('friends').select('friend_id').eq('user_id', me.id);
+  friendIds = {};
+  if (!friendsRes.error) { (friendsRes.data || []).forEach(function (f) { friendIds[f.friend_id] = true; }); }
+
+  return rows.map(function (r) {
+    var user = r.user_id === me.id ? me.username : r.username;
+    var avatarUrl = r.user_id === me.id ? me.avatarUrl : publicUrl(r.avatar_path);
+    return {
+      id: r.user_id,
+      userId: r.user_id,
+      user: user,
+      avatarUrl: avatarUrl,
+      initial: (user || '').replace('@', '').charAt(0).toUpperCase() || '?',
+      mins: Math.max(0, Math.round((Date.now() - new Date(r.updated_at).getTime()) / 60000)),
+      friend: r.user_id === me.id || !!friendIds[r.user_id],
+      likes: r.likes_count || 0,
+      liked: !!myLikes[r.user_id],
+      commentCount: r.comments_count || 0,
+      src: publicUrl(r.image_path),
+      imagePath: r.image_path,
+      alt: r.alt || (r.username + '\u2019s space'),
+      comments: null // lazy-loaded when the comment sheet opens
+    };
+  });
 }
 
 function ago(m) { return m < 60 ? m + 'm' : Math.floor(m / 60) + 'h'; }
@@ -516,6 +780,8 @@ function setLike(p, btn, count) {
 }
 
 var TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>';
+var ADDFRIEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5"/><path d="M18 8v6M15 11h6"/></svg>';
+var FRIENDED = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2" fill="currentColor" stroke="none"/><path d="M3.5 19c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5"/><path d="M15.5 11l2 2 3.5-3.5"/></svg>';
 
 function build(p) {
   var sec = el('section', 'piece');
@@ -530,9 +796,30 @@ function build(p) {
   pop.innerHTML = HEART.replace('fill="none"', 'fill="currentColor"');
   art.appendChild(pop);
 
+  var zoomBtn = el('button', 'zoomBtn'); zoomBtn.type = 'button';
+  zoomBtn.setAttribute('aria-label', 'View full-screen');
+  zoomBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8M8 10.5h5M10.5 8v5"/></svg>';
+  zoomBtn.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+  zoomBtn.addEventListener('pointerup', function (e) { e.stopPropagation(); });
+  zoomBtn.onclick = function (e) { e.stopPropagation(); openLightbox(p.src, p.alt); };
+  art.appendChild(zoomBtn);
+
   var meta = el('div', 'meta');
+  var metaLeft = el('div', 'metaLeft');
+  var avatar = el('div', 'pieceAvatar');
+  function paintInitial() { avatar.innerHTML = '<span>' + p.initial + '</span>'; }
+  if (p.avatarUrl) {
+    var avImg = document.createElement('img');
+    avImg.src = p.avatarUrl; avImg.alt = ''; avImg.loading = 'lazy'; avImg.draggable = false;
+    avImg.onerror = paintInitial;
+    avatar.appendChild(avImg);
+  } else {
+    paintInitial();
+  }
+  metaLeft.appendChild(avatar);
   var who = el('div', 'who', p.user);
   who.appendChild(el('span', '', ago(p.mins)));
+  metaLeft.appendChild(who);
 
   var acts = el('div', 'acts');
   var like = el('button', 'act'); like.type = 'button';
@@ -540,11 +827,27 @@ function build(p) {
   var lc = el('span'); like.appendChild(lc);
   var cm = el('button', 'act'); cm.type = 'button';
   cm.innerHTML = BUBBLE;
-  var cc = el('span', '', p.comments.length); cm.appendChild(cc);
+  var cc = el('span', '', p.commentCount); cm.appendChild(cc);
   cm.setAttribute('aria-label', 'Open comments');
   setLike(p, like, lc);
 
-  function toggle() { p.liked = !p.liked; p.likes += p.liked ? 1 : -1; setLike(p, like, lc); }
+  var liking = false;
+  function toggle() {
+    if (liking) { return; }
+    liking = true;
+    var goingLiked = !p.liked;
+    p.liked = goingLiked; p.likes += goingLiked ? 1 : -1; setLike(p, like, lc);
+    var q = goingLiked
+      ? sb.from('likes').insert({ piece_id: p.userId, user_id: me.id })
+      : sb.from('likes').delete().eq('piece_id', p.userId).eq('user_id', me.id);
+    q.then(function (res) {
+      liking = false;
+      if (res.error) {
+        // Revert on failure (e.g. offline).
+        p.liked = !goingLiked; p.likes += goingLiked ? -1 : 1; setLike(p, like, lc);
+      }
+    });
+  }
   like.onclick = toggle;
   cm.onclick = function () { openC(p, cc); };
 
@@ -559,14 +862,49 @@ function build(p) {
   });
 
   acts.appendChild(like); acts.appendChild(cm);
-  if (p.user === '@you') {
+  if (p.userId === me.id) {
     var rem = el('button', 'act'); rem.type = 'button';
     rem.innerHTML = TRASH;
     rem.setAttribute('aria-label', 'Remove this piece');
     rem.onclick = function () { removePiece(p.id); };
     acts.appendChild(rem);
+  } else {
+    if (p.friend) {
+      var dmBtn = el('button', 'act'); dmBtn.type = 'button';
+      dmBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>';
+      dmBtn.setAttribute('aria-label', 'Message ' + p.user);
+      dmBtn.onclick = function () { openThread(p.userId, p.user); };
+      acts.appendChild(dmBtn);
+    }
+    var friendBtn = el('button', 'act'); friendBtn.type = 'button';
+    function paintFriendBtn() {
+      friendBtn.innerHTML = p.friend ? FRIENDED : ADDFRIEND;
+      friendBtn.setAttribute('aria-label', p.friend ? ('Remove ' + p.user + ' as a friend') : ('Add ' + p.user + ' as a friend'));
+    }
+    paintFriendBtn();
+    friendBtn.onclick = function () {
+      friendBtn.disabled = true;
+      var q = p.friend
+        ? sb.from('friends').delete().eq('user_id', me.id).eq('friend_id', p.userId)
+        : sb.from('friends').insert({ user_id: me.id, friend_id: p.userId });
+      q.then(function (res) {
+        friendBtn.disabled = false;
+        if (res.error) { showToast('Could not update friend.', 2000); return; }
+        p.friend = !p.friend;
+        if (p.friend) {
+          friendIds[p.userId] = true;
+          showToast('Added ' + p.user + '.', 1600);
+          paintFriendBtn();
+        } else {
+          delete friendIds[p.userId];
+          showToast('Removed ' + p.user + '.', 1600);
+          if (mode === 'fr') { render(); } else { paintFriendBtn(); }
+        }
+      });
+    };
+    acts.appendChild(friendBtn);
   }
-  meta.appendChild(who); meta.appendChild(acts);
+  meta.appendChild(metaLeft); meta.appendChild(acts);
   sec.appendChild(art); sec.appendChild(meta);
   return sec;
 }
@@ -579,8 +917,13 @@ function render() {
   var list = pieces.filter(function (p) { return mode === 'all' || p.friend; });
   if (!list.length) {
     var e = el('div', 'empty');
-    e.appendChild(el('h2', '', 'No friends yet.'));
-    e.appendChild(el('p', '', 'When you add friends, their pieces show up here.'));
+    if (mode === 'all') {
+      e.appendChild(el('h2', '', 'Nothing here yet.'));
+      e.appendChild(el('p', '', 'Be the first to post a piece.'));
+    } else {
+      e.appendChild(el('h2', '', 'No friends yet.'));
+      e.appendChild(el('p', '', 'When you add friends, their pieces show up here.'));
+    }
     feed.appendChild(e);
     return;
   }
@@ -598,16 +941,104 @@ function setMode(m) {
   mode = m;
   $('m-all').setAttribute('aria-pressed', m === 'all');
   $('m-fr').setAttribute('aria-pressed', m === 'fr');
+  var header = $('artlandHeader');
+  if (header) { header.classList.remove('segHidden'); }
   render();
 }
 $('m-all').onclick = function () { setMode('all'); };
 $('m-fr').onclick = function () { setMode('fr'); };
 
+/* ---- Everyone/Friends toggle: slides away while scrolling down the feed,
+   returns as soon as the user scrolls back up or the feed is at the top ---- */
+(function () {
+  var header = $('artlandHeader');
+  var feedEl = $('feed');
+  if (!header || !feedEl) { return; }
+  var lastY = 0, hidden = false, ticking = false;
+  var THRESHOLD = 6; // ignore tiny/rubber-band jitters
+  function apply() {
+    var y = feedEl.scrollTop;
+    if (y <= 8) {
+      if (hidden) { hidden = false; header.classList.remove('segHidden'); }
+      lastY = y; ticking = false; return;
+    }
+    var delta = y - lastY;
+    if (delta > THRESHOLD && !hidden) { hidden = true; header.classList.add('segHidden'); lastY = y; }
+    else if (delta < -THRESHOLD && hidden) { hidden = false; header.classList.remove('segHidden'); lastY = y; }
+    else if (Math.abs(delta) > THRESHOLD) { lastY = y; }
+    ticking = false;
+  }
+  feedEl.addEventListener('scroll', function () {
+    if (!ticking) { ticking = true; requestAnimationFrame(apply); }
+  }, { passive: true });
+})();
+
+/* ---- Lightbox: full-screen zoom viewer for Artland pieces ---- */
+var LB_MIN = 1, LB_MAX = 4;
+var lb = { scale: 1, tx: 0, ty: 0 };
+
+function paintLB() {
+  $('lbImg').style.transform = 'translate(' + lb.tx + 'px,' + lb.ty + 'px) scale(' + lb.scale + ')';
+}
+function resetLB() { lb = { scale: 1, tx: 0, ty: 0 }; paintLB(); }
+
+function openLightbox(src, alt) {
+  var img = $('lbImg');
+  img.src = src; img.alt = alt || '';
+  resetLB();
+  $('lightbox').hidden = false;
+}
+function closeLightbox() { $('lightbox').hidden = true; }
+$('lbClose').onclick = closeLightbox;
+
+(function () {
+  var stage = $('lbStage');
+  var pointers = {}, mode = null, start = {};
+  function pts() { return Object.keys(pointers).map(function (id) { return pointers[id]; }); }
+  function begin() {
+    var p = pts();
+    if (p.length === 1) {
+      mode = lb.scale > 1.02 ? 'pan' : null;
+      start = { sx: p[0].x, sy: p[0].y, otx: lb.tx, oty: lb.ty };
+    } else if (p.length >= 2) {
+      mode = 'pinch';
+      start = { dist: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1, scale: lb.scale };
+    } else { mode = null; }
+  }
+  stage.addEventListener('pointerdown', function (ev) {
+    stage.setPointerCapture(ev.pointerId);
+    pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+    begin();
+  });
+  stage.addEventListener('pointermove', function (ev) {
+    if (!(ev.pointerId in pointers)) { return; }
+    pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+    var p = pts();
+    if (mode === 'pan' && p.length === 1) {
+      lb.tx = start.otx + (p[0].x - start.sx);
+      lb.ty = start.oty + (p[0].y - start.sy);
+      paintLB();
+    } else if (mode === 'pinch' && p.length >= 2) {
+      var dist = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1;
+      lb.scale = clamp(start.scale * (dist / start.dist), LB_MIN, LB_MAX);
+      paintLB();
+    }
+  });
+  function end(ev) {
+    if (!(ev.pointerId in pointers)) { return; }
+    delete pointers[ev.pointerId];
+    if (!pts().length && lb.scale <= 1.02) { lb.scale = 1; lb.tx = 0; lb.ty = 0; paintLB(); }
+    begin();
+  }
+  stage.addEventListener('pointerup', end);
+  stage.addEventListener('pointercancel', end);
+})();
+
 var cur = null, curCount = null, opener = null;
 function drawC() {
   var ul = $('clist');
   ul.innerHTML = '';
-  if (!cur.comments.length) { ul.appendChild(el('li', 'none', 'No comments yet. Be the first.')); return; }
+  if (!cur.comments || !cur.comments.length) { ul.appendChild(el('li', 'none', 'No comments yet. Be the first.')); return; }
   cur.comments.forEach(function (c) {
     var li = el('li');
     li.appendChild(el('b', '', c.u));
@@ -615,12 +1046,22 @@ function drawC() {
     ul.appendChild(li);
   });
 }
-function openC(p, countEl) {
+async function openC(p, countEl) {
   cur = p; curCount = countEl; opener = document.activeElement;
-  drawC();
   $('cerr').textContent = '';
   $('veil').hidden = false; $('sheet').hidden = false;
   $('cin').focus();
+  if (p.comments === null) {
+    var ul = $('clist');
+    ul.innerHTML = '';
+    ul.appendChild(el('li', 'none', 'Loading\u2026'));
+    var res = await sb.from('comments').select('body, user_id, profiles(username)').eq('piece_id', p.userId).order('created_at', { ascending: true });
+    if (cur !== p) { return; } // sheet moved on before this resolved
+    p.comments = res.error ? [] : (res.data || []).map(function (row) {
+      return { u: row.user_id === me.id ? me.username : (row.profiles ? row.profiles.username : '@someone'), t: row.body };
+    });
+  }
+  drawC();
 }
 function closeC() {
   $('veil').hidden = true; $('sheet').hidden = true;
@@ -633,12 +1074,19 @@ $('cform').addEventListener('submit', function (e) {
   e.preventDefault();
   var v = $('cin').value.trim();
   if (!v) { $('cerr').textContent = 'Write something first.'; $('cin').focus(); return; }
-  // Later: insert this comment into Supabase before showing it.
-  cur.comments.push({ u: '@you', t: v });
-  curCount.textContent = cur.comments.length;
+  var p = cur;
   $('cin').value = ''; $('cerr').textContent = '';
-  drawC();
-  var ul = $('clist'); ul.scrollTop = ul.scrollHeight;
+  sb.from('comments').insert({ piece_id: p.userId, user_id: me.id, body: v }).then(function (res) {
+    if (res.error) { $('cerr').textContent = 'Could not post that comment. Try again.'; $('cin').value = v; return; }
+    if (!p.comments) { p.comments = []; }
+    p.comments.push({ u: me.username, t: v });
+    p.commentCount = p.comments.length;
+    if (cur === p) {
+      curCount.textContent = p.commentCount;
+      drawC();
+      var ul = $('clist'); ul.scrollTop = ul.scrollHeight;
+    }
+  });
 });
 
 var tt;
@@ -672,28 +1120,59 @@ function writeLS(key, val) {
 }
 
 function paintYou() {
-  var name = readLS('ps_username', '@you');
-  $('youName').textContent = name;
-  $('youAvatar').innerHTML = '<span>' + (name.replace('@', '').charAt(0) || '?').toUpperCase() + '</span>';
+  if (!me) { return; } // still connecting — boot's initBackend().then(...) repaints once ready
+  $('youName').textContent = me.username;
 
   var mine = null;
-  for (var i = 0; i < pieces.length; i++) { if (pieces[i].id === YOU_ID) { mine = pieces[i]; break; } }
+  for (var i = 0; i < pieces.length; i++) { if (pieces[i].id === me.id) { mine = pieces[i]; break; } }
+  if (me.avatarUrl) {
+    $('youAvatar').innerHTML = '<img src="' + me.avatarUrl + '" alt="Your profile picture">';
+  } else if (mine) {
+    $('youAvatar').innerHTML = '<img src="' + mine.src + '" alt="Your profile picture">';
+  } else {
+    $('youAvatar').innerHTML = '<span>' + (me.username.replace('@', '').charAt(0) || '?').toUpperCase() + '</span>';
+  }
+
   if (mine) {
     $('youLikes').textContent = mine.likes;
-    $('youComments').textContent = mine.comments.length;
+    $('youComments').textContent = mine.commentCount;
     $('youLand').innerHTML = '<img src="' + mine.src + '" alt="Your piece">';
-    $('youAvatar').innerHTML = '<img src="' + mine.src + '" alt="">';
   } else {
     $('youLikes').textContent = '0';
     $('youComments').textContent = '0';
     $('youLand').innerHTML = '<p>Nothing posted yet.</p>';
   }
 
-  var notifOn = readLS('ps_notif', '1') === '1';
-  $('notifToggle').setAttribute('aria-checked', notifOn ? 'true' : 'false');
+  if (pushSupported() && Notification.permission !== 'denied') {
+    currentPushSubscription().then(function (sub) {
+      $('notifToggle').setAttribute('aria-checked', sub ? 'true' : 'false');
+    });
+  } else {
+    $('notifToggle').setAttribute('aria-checked', 'false');
+  }
   var lightOn = readLS('ps_theme', 'dark') === 'light';
   $('themeToggle').setAttribute('aria-checked', lightOn ? 'true' : 'false');
 }
+
+$('youAvatar').onclick = function () { $('avatarPick').click(); };
+$('avatarPick').addEventListener('change', function (e) {
+  var file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) { return; }
+  var path = me.id + '/avatar.webp';
+  showToast('Updating photo\u2026', 60000);
+  sb.storage.from(MEDIA_BUCKET).upload(path, file, { upsert: true, contentType: file.type || 'image/webp' })
+    .then(function (up) {
+      if (up.error) { showToast('Could not update your photo.', 2400); return; }
+      return sb.from('profiles').update({ avatar_path: path }).eq('id', me.id).then(function (res) {
+        if (res.error) { showToast('Could not update your photo.', 2400); return; }
+        me.avatar_path = path;
+        me.avatarUrl = publicUrl(path) + '?t=' + Date.now();
+        paintYou();
+        showToast('Photo updated.', 1800);
+      });
+    });
+});
 
 $('youOpenStudio').onclick = showStudio;
 
@@ -707,21 +1186,41 @@ $('youEditName').onclick = function () {
 };
 function saveName() {
   var inp = $('youNameInput');
-  var val = (inp.value || '').trim() || '@you';
+  var val = (inp.value || '').trim() || me.username;
   if (val.charAt(0) !== '@') { val = '@' + val.replace(/^@+/, ''); }
-  writeLS('ps_username', val);
-  $('youName').textContent = val;
   inp.hidden = true;
   $('youNameRow').hidden = false;
+  if (val === me.username) { return; }
+  var prev = me.username;
+  me.username = val;
+  $('youName').textContent = val;
+  pieces.forEach(function (p) { if (p.userId === me.id) { p.user = val; } });
+  render();
+  paintYou();
+  sb.from('profiles').update({ username: val }).eq('id', me.id).then(function (res) {
+    if (res.error) {
+      me.username = prev;
+      $('youName').textContent = prev;
+      pieces.forEach(function (p) { if (p.userId === me.id) { p.user = prev; } });
+      render();
+      paintYou();
+      showToast(res.error.code === '23505' ? 'That name is taken.' : 'Could not save that name.', 2200);
+    }
+  });
 }
 $('youNameInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') { saveName(); } });
 $('youNameInput').addEventListener('blur', saveName);
 
-$('notifToggle').onclick = function () {
-  var on = $(this.id).getAttribute('aria-checked') !== 'true';
-  $('notifToggle').setAttribute('aria-checked', on ? 'true' : 'false');
-  writeLS('ps_notif', on ? '1' : '0');
-  showToast(on ? 'Notifications on.' : 'Notifications off.', 1600);
+$('notifToggle').onclick = async function () {
+  var turningOn = $('notifToggle').getAttribute('aria-checked') !== 'true';
+  var btn = $('notifToggle');
+  btn.disabled = true;
+  var ok = turningOn ? await enablePush() : await disablePush();
+  btn.disabled = false;
+  if (ok) {
+    btn.setAttribute('aria-checked', turningOn ? 'true' : 'false');
+    showToast(turningOn ? 'Notifications on.' : 'Notifications off.', 1600);
+  }
 };
 $('themeToggle').onclick = function () {
   var on = $('themeToggle').getAttribute('aria-checked') !== 'true';
@@ -730,53 +1229,251 @@ $('themeToggle').onclick = function () {
   document.documentElement.setAttribute('data-theme', on ? 'light' : 'dark');
 };
 $('premiumRow').onclick = function () { showToast('Premium is coming soon.', 2000); };
+$('howRow').onclick = function () { openTutorial(); };
 $('helpRow').onclick = function () { showToast('help@pixelspace — coming soon.', 2000); };
 $('aboutRow').onclick = function () { showToast('Pixel Space — the colorful space for the random guy.', 2600); };
 
 if (readLS('ps_theme', 'dark') === 'light') { document.documentElement.setAttribute('data-theme', 'light'); }
 
-/* ---- Removing your space un-publishes it from Artland — instant, undoable ----
-   for 6 seconds via toast, and still recoverable after that from a single
-   stash slot (there's only ever one space to remove) until you Post again. ---- */
-function readObj(key) {
-  var raw, obj;
-  try { raw = localStorage.getItem(key); } catch (e) { raw = null; }
-  try { obj = raw ? JSON.parse(raw) : null; } catch (e) { obj = null; }
-  return obj;
-}
-function writeObj(key, obj) {
-  try { localStorage.setItem(key, JSON.stringify(obj)); } catch (e) {}
-}
-function clearKey(key) {
-  try { localStorage.removeItem(key); } catch (e) {}
-}
+/* ---- Removing your space un-publishes it from Artland — instant, undoable
+   for 6 seconds via toast. The row (and its likes/comments) is actually
+   deleted from Supabase on remove; undo re-creates it from the same
+   still-live image, but as a fresh row (likes/comments don't carry back). ---- */
 function removePiece(id) {
   var idx = -1;
   for (var i = 0; i < pieces.length; i++) { if (pieces[i].id === id) { idx = i; break; } }
   if (idx === -1) { return; }
   var removed = pieces[idx];
   pieces.splice(idx, 1);
-
-  var saved = readObj('ps_myspace');
-  clearKey('ps_myspace');
-  writeObj('ps_removed_myspace', saved || { id: id, src: removed.src, createdAt: Date.now() });
-
   render();
-  showToast('Removed from Artland.', 6000, 'Undo', function () { restorePiece(id, removed, idx); });
+  sb.from('pieces').delete().eq('user_id', me.id).then(function (res) {
+    if (res.error) { showToast('Could not remove that. Try again.', 2200); pieces.splice(idx, 0, removed); render(); return; }
+    showToast('Removed from Artland.', 6000, 'Undo', function () { restorePiece(removed, idx); });
+  });
 }
-function restorePiece(id, pieceObj, atIndex) {
-  var saved = readObj('ps_removed_myspace');
-  clearKey('ps_removed_myspace');
-  writeObj('ps_myspace', saved || { id: id, src: pieceObj.src, createdAt: Date.now() });
-  pieces.splice(Math.min(atIndex, pieces.length), 0, pieceObj);
-  render();
-  showToast('Restored.', 2200);
+function restorePiece(pieceObj, atIndex) {
+  sb.from('pieces').insert({ user_id: me.id, image_path: pieceObj.imagePath, alt: pieceObj.alt }).then(function (res) {
+    if (res.error) { showToast('Could not restore that.', 2200); return; }
+    pieceObj.mins = 0; pieceObj.likes = 0; pieceObj.liked = false; pieceObj.commentCount = 0; pieceObj.comments = [];
+    pieces.splice(Math.min(atIndex, pieces.length), 0, pieceObj);
+    render();
+    showToast('Restored.', 2200);
+  });
 }
 
 /* ================= Studio ================= */
 var cv = $('cv'), W = 100, H = 125;
 var sItems = [], sSel = null, uid = 0, zc = 1, bg = 'dark';
 var multiMode = false, multiSel = [];
+
+/* ---- Daily design quota: makes Studio a game rather than a free-for-all.
+   Day one gives a big allowance to get a first board going; every day after
+   that gives a small trickle of 5 — plus a decaying rollover of whatever
+   was left unused the day before (leftover minus 2, floored at 0), capped
+   so it never exceeds the day-one welcome amount. So skipping a day isn't
+   wasted, but it can't compound into a free-for-all either. That first big
+   day-one pile itself never rolls over — it's a one-time kickoff, not
+   something to bank. Tracked per-device in localStorage; if this should
+   instead persist per-account (surviving a reinstall or a new device),
+   move it into a Supabase table keyed by user id. ---- */
+var QUOTA_KEY = 'pixelspace_quota_v1';
+var DAY1_ADDS = 20, DAILY_ADDS = 5;
+var quota = null;
+var chatWith = null, chatChannel = null, unreadTotal = 0;
+
+function todayStr() {
+  var d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+function loadQuota() {
+  var raw = null;
+  try { raw = localStorage.getItem(QUOTA_KEY); } catch (e) {}
+  var today = todayStr();
+  var saved = null;
+  if (raw) { try { saved = JSON.parse(raw); } catch (e) { saved = null; } }
+  if (!saved) {
+    // Very first time this device has opened Studio.
+    quota = { day: today, addsLeft: DAY1_ADDS, isDayOne: true };
+  } else if (saved.day !== today) {
+    var carry = saved.isDayOne ? 0 : Math.max(0, saved.addsLeft - 2);
+    quota = { day: today, addsLeft: Math.min(DAY1_ADDS, DAILY_ADDS + carry), isDayOne: false };
+  } else {
+    quota = saved;
+  }
+  saveQuota();
+}
+function saveQuota() {
+  try { localStorage.setItem(QUOTA_KEY, JSON.stringify(quota)); } catch (e) {}
+}
+function updateQuotaHUD() {
+  if (!quota) { return; }
+  $('quotaAdds').textContent = quota.addsLeft + ' to add';
+  $('quotaHint').hidden = !quota.isDayOne;
+  $('quotabar').classList.toggle('low', quota.addsLeft <= 1);
+}
+function canAdd() { return quota && quota.addsLeft > 0; }
+function useAdd() { quota.addsLeft = Math.max(0, quota.addsLeft - 1); saveQuota(); updateQuotaHUD(); }
+function refundAdd() { quota.addsLeft++; saveQuota(); updateQuotaHUD(); }
+
+/* ---- First-run tutorial: explains the app and the daily quota game.
+   Shows once automatically, and can be replayed any time from
+   You > Settings > "How Pixel Space works". ---- */
+var TUT_KEY = 'pixelspace_tutorial_seen_v1';
+var tutSteps = [
+  { title: 'Welcome to Pixel Space', text: 'The colourful space for the random guy — a black & white home for whatever you make. Newest first, no algorithm.' },
+  { title: 'Build in Studio', text: 'Add a photo, turn a video into a looping sticker, or drop in a shape, some text, or a voice note. Drag, resize, and snap them into place.' },
+  { title: 'Post to Artland', text: 'Share your piece to Everyone or just Friends. Double-tap a piece to like it, tap the bubble to comment.' },
+  { title: "It's a game, too", text: 'Day one gives you 20 adds to play with in Studio. After that, just 5 a day — so choose what makes the board. Delete as much as you like, any time.' }
+];
+var tutIdx = 0;
+function renderTut() {
+  var s = tutSteps[tutIdx];
+  $('tutTitle').textContent = s.title;
+  $('tutText').textContent = s.text;
+  $('tutDots').innerHTML = tutSteps.map(function (_, i) { return '<span class="' + (i === tutIdx ? 'on' : '') + '"></span>'; }).join('');
+  $('tutBack').hidden = tutIdx === 0;
+  $('tutNext').textContent = (tutIdx === tutSteps.length - 1) ? 'Start creating' : 'Next';
+}
+function openTutorial() { tutIdx = 0; renderTut(); $('tutorial').hidden = false; }
+function closeTutorial() { $('tutorial').hidden = true; try { localStorage.setItem(TUT_KEY, '1'); } catch (e) {} }
+function maybeShowTutorialOnFirstRun() {
+  var seen = false;
+  try { seen = !!localStorage.getItem(TUT_KEY); } catch (e) {}
+  if (!seen) { openTutorial(); }
+}
+$('tutNext').onclick = function () {
+  if (tutIdx === tutSteps.length - 1) { closeTutorial(); return; }
+  tutIdx++; renderTut();
+};
+$('tutBack').onclick = function () { if (tutIdx > 0) { tutIdx--; renderTut(); } };
+$('tutSkip').onclick = closeTutorial;
+
+/* ---- Direct messages: reachable from the Artland header, the You header,
+   and a Message button on any friend's post. Restricted to friends both
+   ways (enforced server-side by RLS on the messages table). ---- */
+function updateChatDots() {
+  var show = unreadTotal > 0;
+  $('msgDotArtland').hidden = !show;
+  $('msgDotYou').hidden = !show;
+}
+async function refreshUnreadCount() {
+  try {
+    var res = await sb.from('messages').select('id', { count: 'exact', head: true }).eq('recipient_id', me.id).is('read_at', null);
+    unreadTotal = res.count || 0;
+  } catch (e) { unreadTotal = 0; }
+  updateChatDots();
+}
+function buildMsgEl(m) {
+  var mine = m.sender_id === me.id;
+  var li = el('li', 'msg ' + (mine ? 'me' : 'them'));
+  li.appendChild(document.createTextNode(m.body));
+  li.appendChild(el('span', 'msgTime', new Date(m.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })));
+  return li;
+}
+function openChatList() {
+  chatWith = null;
+  unsubscribeChat();
+  $('chatTitle').textContent = 'Messages';
+  $('chatThread').hidden = true;
+  $('chatList').hidden = false;
+  $('chat').hidden = false;
+  loadConversations();
+}
+async function loadConversations() {
+  var list = $('chatList');
+  list.innerHTML = '';
+  list.appendChild(el('p', 'chatEmpty', 'Loading\u2026'));
+  var res = await sb.from('messages').select('id, sender_id, recipient_id, body, created_at, read_at').or('sender_id.eq.' + me.id + ',recipient_id.eq.' + me.id).order('created_at', { ascending: false });
+  list.innerHTML = '';
+  if (res.error) { list.appendChild(el('p', 'chatEmpty', 'Could not load messages.')); return; }
+  var rows = res.data || [];
+  var byOther = {}, order = [];
+  rows.forEach(function (m) {
+    var otherId = m.sender_id === me.id ? m.recipient_id : m.sender_id;
+    if (!byOther[otherId]) { byOther[otherId] = { last: m, unread: 0 }; order.push(otherId); }
+    if (m.recipient_id === me.id && !m.read_at) { byOther[otherId].unread++; }
+  });
+  if (!order.length) { list.appendChild(el('p', 'chatEmpty', 'No messages yet. Message a friend from their post in Artland.')); return; }
+  var profRes = await sb.from('profiles').select('id, username').in('id', order);
+  var names = {};
+  (profRes.data || []).forEach(function (p) { names[p.id] = p.username; });
+  order.forEach(function (otherId) {
+    var o = byOther[otherId];
+    var name = names[otherId] || '@someone';
+    var row = el('button', 'chatRow'); row.type = 'button';
+    var nameLine = el('span', 'chatRowName', name);
+    if (o.unread) { nameLine.appendChild(el('span', 'chatDot')); }
+    row.appendChild(nameLine);
+    row.appendChild(el('span', 'chatRowPreview', (o.last.sender_id === me.id ? 'You: ' : '') + o.last.body));
+    row.onclick = function () { openThread(otherId, name); };
+    list.appendChild(row);
+  });
+}
+function openThread(otherId, otherName) {
+  chatWith = { id: otherId, username: otherName };
+  $('chatTitle').textContent = otherName;
+  $('chatList').hidden = true;
+  $('chatThread').hidden = false;
+  $('chat').hidden = false;
+  $('chatErr').textContent = '';
+  $('chatInput').value = '';
+  loadThreadMessages();
+  subscribeChat();
+  setTimeout(function () { $('chatInput').focus(); }, 50);
+}
+async function loadThreadMessages() {
+  var ul = $('chatMsgs');
+  var otherId = chatWith.id;
+  ul.innerHTML = '';
+  ul.appendChild(el('li', 'chatEmpty', 'Loading\u2026'));
+  var res = await sb.from('messages').select('id, sender_id, recipient_id, body, created_at, read_at')
+    .or('and(sender_id.eq.' + me.id + ',recipient_id.eq.' + otherId + '),and(sender_id.eq.' + otherId + ',recipient_id.eq.' + me.id + ')')
+    .order('created_at', { ascending: true });
+  if (!chatWith || chatWith.id !== otherId) { return; } // thread moved on while this was loading
+  ul.innerHTML = '';
+  if (res.error) { ul.appendChild(el('li', 'chatEmpty', 'Could not load this conversation.')); return; }
+  var rows = res.data || [];
+  rows.forEach(function (m) { ul.appendChild(buildMsgEl(m)); });
+  ul.scrollTop = ul.scrollHeight;
+  var unreadIds = rows.filter(function (m) { return m.recipient_id === me.id && !m.read_at; }).map(function (m) { return m.id; });
+  if (unreadIds.length) { sb.from('messages').update({ read_at: new Date().toISOString() }).in('id', unreadIds).then(refreshUnreadCount); }
+}
+function subscribeChat() {
+  unsubscribeChat();
+  chatChannel = sb.channel('dm-' + me.id)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'recipient_id=eq.' + me.id }, function (payload) {
+      var m = payload.new;
+      if (chatWith && m.sender_id === chatWith.id && !$('chatThread').hidden) {
+        $('chatMsgs').appendChild(buildMsgEl(m));
+        $('chatMsgs').scrollTop = $('chatMsgs').scrollHeight;
+        sb.from('messages').update({ read_at: new Date().toISOString() }).eq('id', m.id).then(refreshUnreadCount);
+      } else {
+        refreshUnreadCount();
+      }
+    })
+    .subscribe();
+}
+function unsubscribeChat() { if (chatChannel) { sb.removeChannel(chatChannel); chatChannel = null; } }
+function closeChat() { $('chat').hidden = true; unsubscribeChat(); chatWith = null; }
+
+$('msgBtnArtland').onclick = openChatList;
+$('msgBtnYou').onclick = openChatList;
+$('chatBack').onclick = function () { if (chatWith) { openChatList(); } else { closeChat(); } };
+$('chatForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  if (!chatWith) { return; }
+  var v = $('chatInput').value.trim();
+  if (!v) { return; }
+  var otherId = chatWith.id, otherName = chatWith.username;
+  $('chatInput').value = '';
+  $('chatErr').textContent = '';
+  $('chatMsgs').appendChild(buildMsgEl({ sender_id: me.id, recipient_id: otherId, body: v, created_at: new Date().toISOString() }));
+  $('chatMsgs').scrollTop = $('chatMsgs').scrollHeight;
+  sb.from('messages').insert({ sender_id: me.id, recipient_id: otherId, body: v }).then(function (res) {
+    if (res.error) { $('chatErr').textContent = 'Could not send \u2014 you may need to be friends with ' + otherName + '.'; }
+  });
+});
+var snapEnabled = true;
 var BG = { dark: '#161616', light: '#f4f4f4' };
 var FG = { dark: '#f4f4f4', light: '#0b0b0b' };
 var MIN_S = 0.15, MAX_S = 4.5;
@@ -792,12 +1489,24 @@ function splace(it) {
   e.style.transform = 'translate(-50%,-50%) rotate(' + it.r + 'deg) scale(' + it.s + ')';
   e.style.zIndex = it.z;
   if (it.rsEl) { it.rsEl.style.transform = 'scale(' + (1 / it.s) + ')'; }
+  scheduleSaveDraft();
 }
 
 function sdeselect() {
   if (sSel) { sSel.el.classList.remove('on'); }
   sSel = null;
   $('sel').hidden = true;
+  clearGroupHighlight();
+}
+
+function clearGroupHighlight() {
+  sItems.forEach(function (m) { m.el.classList.remove('grp'); });
+}
+function highlightGroup(it) {
+  clearGroupHighlight();
+  if (it && it.groupId) {
+    sItems.forEach(function (m) { if (m.groupId === it.groupId && m !== it) { m.el.classList.add('grp'); } });
+  }
 }
 
 function spick(it) {
@@ -812,6 +1521,7 @@ function spick(it) {
   $('colorrow').hidden = it.type !== 'shape';
   if (it.type === 'shape') { setColorControls(it); }
   $('ungroup').hidden = !it.groupId;
+  highlightGroup(it);
 }
 
 function setMotionButtons(m) {
@@ -823,6 +1533,7 @@ function applyMotion(it, m) {
   it.motion = m;
   it.motionEl.className = it.motionEl.className.replace(/\bmotion-\S+/g, '').trim();
   if (m !== 'none') { it.motionEl.className += ' motion-' + m; }
+  scheduleSaveDraft();
 }
 
 $('mopts').addEventListener('click', function (e) {
@@ -877,6 +1588,7 @@ function setColor(mode, c1, c2) {
   sSel.color = mode === 'none' ? null : { mode: mode, c1: c1, c2: c2 };
   paintShapeEl(sSel);
   setColorControls(sSel);
+  scheduleSaveDraft();
 }
 
 function paintShapeEl(it) {
@@ -910,6 +1622,7 @@ $('cpick2').addEventListener('input', function () {
 function sdrag(it) {
   var e = it.el;
   var pointers = {}, mode = null, start = {};
+  var downX = 0, downY = 0, downT = 0;
 
   function pts() { return Object.keys(pointers).map(function (id) { return pointers[id]; }); }
 
@@ -945,6 +1658,7 @@ function sdrag(it) {
       sItems.forEach(function (gm) { if (gm.groupId === it.groupId && gm !== it) { gm.z = ++zc; splace(gm); } });
     }
     e.setPointerCapture(ev.pointerId);
+    if (!Object.keys(pointers).length) { downX = ev.clientX; downY = ev.clientY; downT = Date.now(); }
     pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
     begin();
   });
@@ -967,6 +1681,7 @@ function sdrag(it) {
           splace(g.item);
         });
       }
+      applySnap(it, start.group, k);
     } else if (mode === 'pinch' && p.length >= 2) {
       var dist = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1;
       var ang = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x) * 180 / Math.PI;
@@ -979,11 +1694,86 @@ function sdrag(it) {
   function endPointer(ev) {
     if (!(ev.pointerId in pointers)) { return; }
     delete pointers[ev.pointerId];
+    if (it.type === 'voice' && !Object.keys(pointers).length &&
+        Math.hypot(ev.clientX - downX, ev.clientY - downY) < 8 && (Date.now() - downT) < 350) {
+      toggleVoicePlay(it);
+    }
     begin();
+    hideGuides();
   }
   e.addEventListener('pointerup', endPointer);
   e.addEventListener('pointercancel', endPointer);
 }
+
+/* ---- Snapping: while dragging, items and edges within SNAP_PX pull flush ----
+   against the nearest edge/center of another item so pieces can sit right
+   up against each other with no gap, or line up cleanly. ---- */
+var SNAP_PX = 9;
+
+function itRect(it) { return it.el.getBoundingClientRect(); }
+
+function unionRect(items) {
+  var rects = items.map(itRect);
+  return {
+    left: Math.min.apply(null, rects.map(function (r) { return r.left; })),
+    right: Math.max.apply(null, rects.map(function (r) { return r.right; })),
+    top: Math.min.apply(null, rects.map(function (r) { return r.top; })),
+    bottom: Math.max.apply(null, rects.map(function (r) { return r.bottom; }))
+  };
+}
+
+function bestAxisSnap(mn, mx, othersEdges) {
+  var mc = (mn + mx) / 2;
+  var best = null, bestAbs = SNAP_PX;
+  othersEdges.forEach(function (o) {
+    var oc = (o.a + o.b) / 2;
+    var candidates = [
+      { delta: o.b - mn, guide: o.b },  // touch: moving's near edge flush against other's far edge
+      { delta: o.a - mx, guide: o.a },  // touch: moving's far edge flush against other's near edge
+      { delta: o.a - mn, guide: o.a },  // near edges aligned
+      { delta: o.b - mx, guide: o.b },  // far edges aligned
+      { delta: oc - mc, guide: oc }     // centers aligned
+    ];
+    candidates.forEach(function (c) {
+      if (Math.abs(c.delta) < bestAbs) { bestAbs = Math.abs(c.delta); best = c; }
+    });
+  });
+  return best;
+}
+
+function applySnap(leadIt, groupStarts, k) {
+  if (!snapEnabled) { hideGuides(); return; }
+  var moving = [leadIt];
+  if (groupStarts) { groupStarts.forEach(function (g) { moving.push(g.item); }); }
+  var others = sItems.filter(function (o) { return moving.indexOf(o) === -1; });
+  if (!others.length) { hideGuides(); return; }
+  var mBox = unionRect(moving);
+  var xSnap = bestAxisSnap(mBox.left, mBox.right, others.map(function (o) { var r = itRect(o); return { a: r.left, b: r.right }; }));
+  var ySnap = bestAxisSnap(mBox.top, mBox.bottom, others.map(function (o) { var r = itRect(o); return { a: r.top, b: r.bottom }; }));
+  var moved = false;
+  if (xSnap) {
+    var ux = xSnap.delta / k;
+    moving.forEach(function (m) { m.x = clamp(m.x + ux, 0, W); });
+    moved = true;
+  }
+  if (ySnap) {
+    var uy = ySnap.delta / k;
+    moving.forEach(function (m) { m.y = clamp(m.y + uy, 0, H); });
+    moved = true;
+  }
+  if (moved) { moving.forEach(splace); }
+  showGuides(xSnap, ySnap);
+}
+
+function showGuides(xSnap, ySnap) {
+  var cvRect = cv.getBoundingClientRect();
+  var gv = $('guideV'), gh = $('guideH');
+  if (xSnap) { gv.hidden = false; gv.style.left = (xSnap.guide - cvRect.left) + 'px'; }
+  else { gv.hidden = true; }
+  if (ySnap) { gh.hidden = false; gh.style.top = (ySnap.guide - cvRect.top) + 'px'; }
+  else { gh.hidden = true; }
+}
+function hideGuides() { $('guideV').hidden = true; $('guideH').hidden = true; }
 
 function sresize(it) {
   var handle = document.createElement('div');
@@ -992,7 +1782,7 @@ function sresize(it) {
   it.el.appendChild(handle);
   it.rsEl = handle;
 
-  var cx = 0, cy = 0, startDist = 1, startS = 1;
+  var cx = 0, cy = 0, startDist = 1, startS = 1, startAng = 0, startR = 0;
 
   handle.addEventListener('pointerdown', function (ev) {
     ev.preventDefault();
@@ -1001,14 +1791,18 @@ function sresize(it) {
     cx = r.left + r.width / 2;
     cy = r.top + r.height / 2;
     startDist = Math.hypot(ev.clientX - cx, ev.clientY - cy) || 1;
+    startAng = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
     startS = it.s;
+    startR = it.r;
     handle.setPointerCapture(ev.pointerId);
   });
 
   handle.addEventListener('pointermove', function (ev) {
     if (!handle.hasPointerCapture || !handle.hasPointerCapture(ev.pointerId)) { return; }
     var dist = Math.hypot(ev.clientX - cx, ev.clientY - cy) || 1;
+    var ang = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
     it.s = clamp(startS * (dist / startDist), MIN_S, MAX_S);
+    it.r = startR + (ang - startAng);
     splace(it);
   });
 
@@ -1020,6 +1814,8 @@ function sresize(it) {
 }
 
 function sadd(it, el2) {
+  if (!canAdd()) { smsg(quota.isDayOne ? 'That\'s all 20 for today — come back tomorrow.' : 'That\'s all 5 adds for today — come back tomorrow.'); return; }
+  useAdd();
   it.id = ++uid; it.z = ++zc; it.s = 1; it.r = 0;
   it.x = 50 + rand(-14, 14); it.y = 70 + rand(-18, 18);
   it.el = el2; el2.className = 'it ' + (el2.className || '');
@@ -1034,17 +1830,21 @@ function sadd(it, el2) {
 }
 
 function addPhoto(file) {
+  if (!canAdd()) { smsg(quota.isDayOne ? 'That\'s all 20 for today — come back tomorrow.' : 'That\'s all 5 adds for today — come back tomorrow.'); return; }
   if (!file || file.type.indexOf('image/') !== 0) { smsg('That file is not an image. Try a photo.'); return; }
   var url = URL.createObjectURL(file);
   var im = new Image();
   im.onload = function () {
+    var ar = (im.naturalWidth / im.naturalHeight) || 1;
     var bw = Math.min(28, 40 * ar);
     var box = document.createElement('div');
     var view = document.createElement('img');
     view.src = url; view.alt = 'Your photo'; view.draggable = false;
     view.style.width = 'calc(var(--u) * ' + bw + ')';
     box.appendChild(view);
-    sadd({ type: 'photo', img: im, file: file, ar: ar, bw: bw, motion: 'none', motionEl: view }, box);
+    var it = { type: 'photo', img: im, file: file, ar: ar, bw: bw, motion: 'none', motionEl: view };
+    it.dataUrl = draftImageDataURL(im);
+    sadd(it, box);
   };
   im.onerror = function () { smsg('Could not open that photo. Try another one.'); };
   im.src = url;
@@ -1058,6 +1858,7 @@ var STICKER_SAMPLE_WINDOW = 2.5; // seconds — short window keeps it feeling li
 var STICKER_FRAME_MS = 110; // ~9fps loop
 
 function addVideo(file) {
+  if (!canAdd()) { smsg(quota.isDayOne ? 'That\'s all 20 for today — come back tomorrow.' : 'That\'s all 5 adds for today — come back tomorrow.'); return; }
   if (!file || file.type.indexOf('video/') !== 0) { smsg('That file is not a video. Try another one.'); return; }
   smsg('Turning that into an animated sticker...');
   var url = URL.createObjectURL(file);
@@ -1141,6 +1942,86 @@ function addText() {
   $('txt').select();
 }
 
+/* ---- Voice notes: record a short clip and drop it on the board as a ----
+   playable sticker. Kept in memory as a blob URL for now — once pieces
+   move to Supabase, the blob should upload to Storage alongside the
+   exported image, and the piece row should carry its URL, since the
+   flattened poster export below can only draw the sticker's icon, not
+   the audio itself. ---- */
+var MAX_VN_SEC = 20;
+var VN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg>';
+var vnRecording = false, vnRecorder = null, vnChunks = [], vnStart = 0, vnTimer = null;
+
+function fmtDur(sec) {
+  var s = Math.max(1, Math.round(sec));
+  return '0:' + (s < 10 ? '0' + s : s);
+}
+
+function startVN() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
+    smsg('Voice recording is not supported on this device.'); return;
+  }
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+    vnChunks = [];
+    var mime = (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('audio/webm')) ? 'audio/webm' : '';
+    try { vnRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); }
+    catch (e) { smsg('Could not start recording.'); stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+    vnRecorder.ondataavailable = function (e) { if (e.data && e.data.size) { vnChunks.push(e.data); } };
+    vnRecorder.onstop = function () {
+      stream.getTracks().forEach(function (t) { t.stop(); });
+      var durationSec = (Date.now() - vnStart) / 1000;
+      if (durationSec < 0.6 || !vnChunks.length) { smsg('That was too short — hold Voice a little longer.'); return; }
+      addVoiceNote(new Blob(vnChunks, { type: vnRecorder.mimeType || 'audio/webm' }), durationSec);
+    };
+    vnRecorder.start();
+    vnStart = Date.now();
+    vnRecording = true;
+    $('addV').textContent = 'Stop 0:00';
+    $('addV').setAttribute('aria-pressed', 'true');
+    smsg('Recording... tap Stop when done.');
+    vnTimer = setInterval(function () {
+      var s = Math.min(MAX_VN_SEC, Math.floor((Date.now() - vnStart) / 1000));
+      $('addV').textContent = 'Stop ' + fmtDur(s);
+      if (s >= MAX_VN_SEC) { stopVN(); }
+    }, 250);
+  }).catch(function () { smsg('Could not access the microphone.'); });
+}
+function stopVN() {
+  if (!vnRecording) { return; }
+  vnRecording = false;
+  clearInterval(vnTimer);
+  $('addV').textContent = 'Voice';
+  $('addV').setAttribute('aria-pressed', 'false');
+  if (vnRecorder && vnRecorder.state !== 'inactive') { vnRecorder.stop(); }
+}
+$('addV').onclick = function () { vnRecording ? stopVN() : startVN(); };
+
+function addVoiceNote(blob, durationSec) {
+  var url = URL.createObjectURL(blob);
+  var outer = document.createElement('div');
+  var inner = document.createElement('div');
+  inner.className = 'vn';
+  inner.innerHTML = VN_ICON;
+  inner.setAttribute('data-dur', fmtDur(durationSec));
+  outer.appendChild(inner);
+  var audioEl = new Audio(url);
+  var it = { type: 'voice', url: url, dur: durationSec, motion: 'none', motionEl: inner, audioEl: audioEl, playing: false };
+  audioEl.addEventListener('play', function () { it.playing = true; inner.classList.add('playing'); });
+  audioEl.addEventListener('pause', function () { it.playing = false; inner.classList.remove('playing'); });
+  audioEl.addEventListener('ended', function () { it.playing = false; inner.classList.remove('playing'); });
+  sadd(it, outer);
+  smsg('');
+  var reader = new FileReader();
+  reader.onload = function () { it.dataUrl = reader.result; scheduleSaveDraft(); };
+  try { reader.readAsDataURL(blob); } catch (e) {}
+}
+function toggleVoicePlay(it) {
+  if (it.playing) { it.audioEl.pause(); return; }
+  sItems.forEach(function (o) { if (o.type === 'voice' && o !== it && o.playing) { o.audioEl.pause(); } });
+  it.audioEl.currentTime = 0;
+  it.audioEl.play().catch(function () { smsg('Could not play that voice note.'); });
+}
+
 function restartStickerAnim(it) {
   if (it.type !== 'animatedSticker' || it.timer) { return; }
   it.timer = setInterval(function () {
@@ -1152,6 +2033,7 @@ function removeSel() {
   if (!sSel) { return; }
   var it = sSel;
   if (it.timer) { clearInterval(it.timer); it.timer = null; }
+  if (it.type === 'voice' && it.audioEl) { it.audioEl.pause(); }
   it.el.remove();
   sItems = sItems.filter(function (i) { return i !== it; });
   sSel = null;
@@ -1159,6 +2041,7 @@ function removeSel() {
   if (!sItems.length) { $('ph').hidden = false; }
   var top = sItems.length ? sItems.reduce(function (a, b) { return (b.z > a.z) ? b : a; }) : null;
   if (top) { spick(top); }
+  scheduleSaveDraft();
   showToast('Removed from your board.', 6000, 'Undo', function () {
     sItems.push(it);
     cv.appendChild(it.el);
@@ -1199,10 +2082,11 @@ function exitMultiMode() {
 function multiDeleteSelected() {
   if (!multiSel.length) { return; }
   var batch = multiSel.slice();
-  batch.forEach(function (it) { if (it.timer) { clearInterval(it.timer); it.timer = null; } it.el.remove(); });
+  batch.forEach(function (it) { if (it.timer) { clearInterval(it.timer); it.timer = null; } if (it.type === 'voice' && it.audioEl) { it.audioEl.pause(); } it.el.remove(); });
   sItems = sItems.filter(function (i) { return batch.indexOf(i) === -1; });
   exitMultiMode();
   if (!sItems.length) { $('ph').hidden = false; }
+  scheduleSaveDraft();
   showToast(batch.length + ' removed from your board.', 6000, 'Undo', function () {
     batch.forEach(function (it) {
       sItems.push(it);
@@ -1219,13 +2103,16 @@ function groupSelected() {
   multiSel.forEach(function (it) { it.groupId = gid; });
   smsg(multiSel.length + ' items grouped — drag any one to move them together.');
   exitMultiMode();
+  scheduleSaveDraft();
 }
 function ungroupSel() {
   if (!sSel || !sSel.groupId) { return; }
   var gid = sSel.groupId;
   sItems.forEach(function (it) { if (it.groupId === gid) { it.groupId = null; } });
   $('ungroup').hidden = true;
+  clearGroupHighlight();
   smsg('Ungrouped.');
+  scheduleSaveDraft();
 }
 $('selMulti').onclick = function () { multiMode ? exitMultiMode() : enterMultiMode(); };
 $('multiDel').onclick = multiDeleteSelected;
@@ -1252,6 +2139,7 @@ function motionHeight(it, k) {
     if (it.shape === 3) { return 26 * k; }
   }
   if (it.type === 'text') { return 9 * k; }
+  if (it.type === 'voice') { return 26 * k; }
   return 20 * k;
 }
 
@@ -1306,16 +2194,167 @@ function sdraw(x, it, k, frameOverride) {
     x.textBaseline = 'middle';
     x.fillText(it.str, 0, 0);
   }
+  if (it.type === 'voice') {
+    x.fillStyle = FG[bg];
+    x.beginPath(); x.arc(0, 0, 13 * k, 0, Math.PI * 2); x.fill();
+    x.fillStyle = BG[bg];
+    var bw2 = 1.6 * k, gap2 = 1.2 * k, hs = [4 * k, 7 * k, 5 * k, 8 * k, 4 * k];
+    var sx0 = -(hs.length * bw2 + (hs.length - 1) * gap2) / 2;
+    hs.forEach(function (h, i) { x.fillRect(sx0 + i * (bw2 + gap2), -h / 2, bw2, h); });
+  }
   x.restore();
 }
 
 function resetStudio() {
-  sItems.forEach(function (it) { if (it.timer) { clearInterval(it.timer); } it.el.remove(); });
+  sItems.forEach(function (it) { if (it.timer) { clearInterval(it.timer); } if (it.type === 'voice' && it.audioEl) { it.audioEl.pause(); } it.el.remove(); });
   sItems = []; sSel = null; zc = 1;
   $('sel').hidden = true;
   $('ph').hidden = false;
   toggleShapePick(false);
   smsg('');
+}
+
+/* ================= Studio board persistence ================= */
+/* The board is meant to work like a plot of real estate — still there
+   after the app has been closed or sat in the background a while, not
+   just for as long as this one page instance happens to stay alive in
+   memory. Failures here are swallowed, same as the quota/tutorial
+   localStorage use above: losing a draft save is never worth crashing
+   the app over. */
+var STUDIO_DRAFT_KEY = 'ps_studio_draft_v1';
+var STUDIO_DRAFT_IMG_MAX = 900; // longest edge, px — keeps drafts small enough for localStorage
+var draftSaveTimer = null;
+
+function draftImageDataURL(img) {
+  try {
+    var w = img.naturalWidth || img.width || 1, h = img.naturalHeight || img.height || 1;
+    var scale = Math.min(1, STUDIO_DRAFT_IMG_MAX / Math.max(w, h));
+    var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+    var c = document.createElement('canvas'); c.width = cw; c.height = ch;
+    c.getContext('2d').drawImage(img, 0, 0, cw, ch);
+    return c.toDataURL('image/webp', 0.82);
+  } catch (e) { return null; }
+}
+
+function serializeStudioItem(it) {
+  var s = { id: it.id, z: it.z, s: it.s, r: it.r, x: it.x, y: it.y, type: it.type, motion: it.motion || 'none' };
+  if (it.groupId) { s.groupId = it.groupId; }
+  if (it.type === 'shape') { s.shape = it.shape; s.color = it.color || null; }
+  else if (it.type === 'text') { s.str = it.str; }
+  else if (it.type === 'photo') { s.dataUrl = it.dataUrl || null; s.ar = it.ar; s.bw = it.bw; }
+  else if (it.type === 'animatedSticker') { s.frameSrcs = it.frameSrcs; s.ar = it.ar; s.bw = it.bw; }
+  else if (it.type === 'voice') { s.dataUrl = it.dataUrl || null; s.dur = it.dur; }
+  return s;
+}
+
+function saveStudioDraftNow() {
+  var items = sItems.map(serializeStudioItem).filter(function (it) {
+    return (it.type !== 'photo' && it.type !== 'voice') || it.dataUrl;
+  });
+  try {
+    localStorage.setItem(STUDIO_DRAFT_KEY, JSON.stringify({ bg: bg, items: items }));
+  } catch (e) {
+    // Most likely the quota was exceeded by a heavy photo or voice note —
+    // fall back to keeping the lightweight items rather than losing the
+    // whole board.
+    try {
+      var lite = items.filter(function (it) { return it.type !== 'photo' && it.type !== 'voice'; });
+      localStorage.setItem(STUDIO_DRAFT_KEY, JSON.stringify({ bg: bg, items: lite }));
+    } catch (e2) { /* give up silently */ }
+  }
+}
+function scheduleSaveDraft() {
+  if (draftSaveTimer) { clearTimeout(draftSaveTimer); }
+  draftSaveTimer = setTimeout(saveStudioDraftNow, 500);
+}
+
+function srestoreFinish(it, el2, saved) {
+  it.id = saved.id || ++uid; it.z = saved.z || ++zc; it.s = saved.s || 1; it.r = saved.r || 0;
+  it.x = saved.x != null ? saved.x : 50; it.y = saved.y != null ? saved.y : 70;
+  if (saved.groupId) { it.groupId = saved.groupId; }
+  it.el = el2; el2.className = 'it ' + (el2.className || '');
+  cv.appendChild(el2);
+  sItems.push(it);
+  uid = Math.max(uid, it.id); zc = Math.max(zc, it.z);
+  $('ph').hidden = true;
+  sdrag(it);
+  sresize(it);
+  if (it.type === 'shape') { paintShapeEl(it); }
+  if (it.type !== 'text' && saved.motion && saved.motion !== 'none') { applyMotion(it, saved.motion); }
+  splace(it);
+}
+function srestorePhoto(saved) {
+  if (!saved.dataUrl) { return; }
+  var im = new Image();
+  im.onload = function () {
+    var box = document.createElement('div');
+    var view = document.createElement('img');
+    view.src = saved.dataUrl; view.alt = 'Your photo'; view.draggable = false;
+    view.style.width = 'calc(var(--u) * ' + saved.bw + ')';
+    box.appendChild(view);
+    srestoreFinish({ type: 'photo', img: im, dataUrl: saved.dataUrl, ar: saved.ar, bw: saved.bw, motion: saved.motion, motionEl: view }, box, saved);
+  };
+  im.src = saved.dataUrl;
+}
+function srestoreSticker(saved) {
+  if (!saved.frameSrcs || !saved.frameSrcs.length) { return; }
+  var frameImgs = saved.frameSrcs.map(function (src) { var im = new Image(); im.src = src; return im; });
+  var view = document.createElement('img');
+  view.src = saved.frameSrcs[0]; view.alt = 'Animated sticker'; view.draggable = false;
+  view.style.width = 'calc(var(--u) * ' + saved.bw + ')';
+  var box = document.createElement('div');
+  box.appendChild(view);
+  var it = { type: 'animatedSticker', frames: frameImgs, frameSrcs: saved.frameSrcs, frameIndex: 0, ar: saved.ar, bw: saved.bw, motion: saved.motion, motionEl: view };
+  srestoreFinish(it, box, saved);
+  it.timer = setInterval(function () {
+    it.frameIndex = (it.frameIndex + 1) % it.frameSrcs.length;
+    view.src = it.frameSrcs[it.frameIndex];
+  }, STICKER_FRAME_MS);
+}
+function srestoreShape(saved) {
+  var outer = document.createElement('div');
+  var inner = document.createElement('div');
+  inner.className = 's' + saved.shape;
+  outer.appendChild(inner);
+  srestoreFinish({ type: 'shape', shape: saved.shape, motion: saved.motion, color: saved.color || null, motionEl: inner }, outer, saved);
+}
+function srestoreText(saved) {
+  var box = document.createElement('div');
+  box.className = 't';
+  box.textContent = saved.str;
+  srestoreFinish({ type: 'text', str: saved.str }, box, saved);
+}
+function srestoreVoice(saved) {
+  if (!saved.dataUrl) { return; }
+  var outer = document.createElement('div');
+  var inner = document.createElement('div');
+  inner.className = 'vn';
+  inner.innerHTML = VN_ICON;
+  inner.setAttribute('data-dur', fmtDur(saved.dur));
+  outer.appendChild(inner);
+  var audioEl = new Audio(saved.dataUrl);
+  var it = { type: 'voice', url: saved.dataUrl, dataUrl: saved.dataUrl, dur: saved.dur, motion: 'none', motionEl: inner, audioEl: audioEl, playing: false };
+  audioEl.addEventListener('play', function () { it.playing = true; inner.classList.add('playing'); });
+  audioEl.addEventListener('pause', function () { it.playing = false; inner.classList.remove('playing'); });
+  audioEl.addEventListener('ended', function () { it.playing = false; inner.classList.remove('playing'); });
+  srestoreFinish(it, outer, saved);
+}
+function restoreStudioDraft() {
+  if (sItems.length) { return; }
+  var raw = null;
+  try { raw = localStorage.getItem(STUDIO_DRAFT_KEY); } catch (e) { raw = null; }
+  if (!raw) { return; }
+  var data = null;
+  try { data = JSON.parse(raw); } catch (e) { return; }
+  if (!data || !data.items || !data.items.length) { return; }
+  if (data.bg === 'light' || data.bg === 'dark') { bg = data.bg; setBg(); }
+  data.items.forEach(function (saved) {
+    if (saved.type === 'photo') { srestorePhoto(saved); }
+    else if (saved.type === 'animatedSticker') { srestoreSticker(saved); }
+    else if (saved.type === 'shape') { srestoreShape(saved); }
+    else if (saved.type === 'text') { srestoreText(saved); }
+    else if (saved.type === 'voice') { srestoreVoice(saved); }
+  });
 }
 
 var gifWorkerURL = null;
@@ -1324,29 +2363,38 @@ function getGifWorkerURL() {
   // Browsers refuse to start a Worker whose script lives on another origin,
   // even when that origin allows it — so we fetch the script ourselves and
   // hand GIF a local blob: URL instead of the raw CDN URL.
-  return fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js')
+  var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var to = setTimeout(function () { if (ctrl) { ctrl.abort(); } }, 6000);
+  return fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js', ctrl ? { signal: ctrl.signal } : undefined)
     .then(function (r) { return r.blob(); })
     .then(function (blob) {
+      clearTimeout(to);
       gifWorkerURL = URL.createObjectURL(blob);
       return gifWorkerURL;
-    });
+    })
+    .catch(function (e) { clearTimeout(to); throw e; });
 }
 
 function exportAnimatedGIF(sorted, EW, EH, k, bgKey) {
   return getGifWorkerURL().then(function (workerUrl) {
     return new Promise(function (resolve, reject) {
-      var FRAME_COUNT = EXPORT_FRAME_COUNT, FRAME_DELAY = 110;
-      var gif = new GIF({ workers: 2, quality: 10, width: EW, height: EH, workerScript: workerUrl });
+      // Animated posts render much smaller than static ones (still 4:5) and use
+      // fewer frames — a full-resolution multi-frame GIF is too slow/heavy to
+      // reliably encode on lower-end phones or slow connections.
+      var GW = 480, GH = 600, gk = GW / 100;
+      var FRAME_COUNT = 8, FRAME_DELAY = 130;
+      var gif = new GIF({ workers: 2, quality: 20, width: GW, height: GH, workerScript: workerUrl });
       for (var f = 0; f < FRAME_COUNT; f++) {
+        var frameIdx = Math.round((f / FRAME_COUNT) * EXPORT_FRAME_COUNT);
         var fc = document.createElement('canvas');
-        fc.width = EW; fc.height = EH;
+        fc.width = GW; fc.height = GH;
         var fx = fc.getContext('2d');
         fx.fillStyle = BG[bgKey];
-        fx.fillRect(0, 0, EW, EH);
-        sorted.forEach(function (it) { sdraw(fx, it, k, f); });
+        fx.fillRect(0, 0, GW, GH);
+        sorted.forEach(function (it) { sdraw(fx, it, gk, frameIdx); });
         gif.addFrame(fx, { delay: FRAME_DELAY, copy: true });
       }
-      var to = setTimeout(function () { reject(new Error('gif timeout')); }, 12000);
+      var to = setTimeout(function () { reject(new Error('gif timeout')); }, 9000);
       gif.on('finished', function (blob) { clearTimeout(to); resolve(blob); });
       gif.on('abort', function () { clearTimeout(to); reject(new Error('gif aborted')); });
       try { gif.render(); } catch (e) { clearTimeout(to); reject(e); }
@@ -1369,6 +2417,32 @@ function exportStaticImage(sorted, EW, EH, k, bgKey) {
   });
 }
 
+async function finishWithBlob(blob, ext, contentType) {
+  var path = me.id + '/piece.' + ext;
+  var up = await sb.storage.from(MEDIA_BUCKET).upload(path, blob, { upsert: true, contentType: contentType });
+  if (up.error) { smsg('Could not post that. Try again.'); return; }
+
+  var row = await sb.from('pieces').upsert({ user_id: me.id, image_path: path }, { onConflict: 'user_id' }).select().single();
+  if (row.error) { smsg('Could not post that. Try again.'); return; }
+
+  var src = publicUrl(path) + '?t=' + Date.now(); // cache-bust so the new version shows immediately
+
+  var idx = -1;
+  for (var i = 0; i < pieces.length; i++) { if (pieces[i].id === me.id) { idx = i; break; } }
+  var entry = { id: me.id, userId: me.id, user: me.username, mins: 0, friend: true, likes: 0, liked: false, commentCount: 0, src: src, imagePath: path, alt: 'Your piece', comments: [] };
+  if (idx !== -1) {
+    entry.likes = pieces[idx].likes; entry.liked = pieces[idx].liked;
+    entry.commentCount = pieces[idx].commentCount; entry.comments = pieces[idx].comments;
+    pieces.splice(idx, 1);
+  }
+  pieces.unshift(entry);
+
+  // The Studio board is your space, not a one-shot draft — posting doesn't clear it.
+  render();
+  showArtland();
+  showToast('Posted to Artland.', 2200);
+}
+
 async function postPiece() {
   if (!sItems.length) { smsg('Add something first.'); return; }
   smsg('Posting...');
@@ -1379,38 +2453,10 @@ async function postPiece() {
     return it.type === 'animatedSticker' || (it.motion && it.motion !== 'none');
   });
 
-  function finishWithSrc(src) {
-    // Later: upload blob to Supabase Storage here, then update this user's one row
-    // in the pieces table, instead of a single localStorage object as this placeholder does.
-    writeObj('ps_myspace', { id: YOU_ID, src: src, createdAt: Date.now() });
-    clearKey('ps_removed_myspace'); // publishing re-publishes it if it had been removed
-
-    var idx = -1;
-    for (var i = 0; i < pieces.length; i++) { if (pieces[i].id === YOU_ID) { idx = i; break; } }
-    var entry = { id: YOU_ID, user: '@you', mins: 0, friend: true, likes: 0, liked: false, src: src, alt: 'Your piece', comments: [] };
-    if (idx !== -1) {
-      entry.likes = pieces[idx].likes; entry.liked = pieces[idx].liked; entry.comments = pieces[idx].comments;
-      pieces.splice(idx, 1);
-    }
-    pieces.unshift(entry);
-
-    // The Studio board is your space, not a one-shot draft — posting doesn't clear it.
-    render();
-    showArtland();
-    showToast('Posted to Artland.', 2200);
-  }
-
-  function blobToSrc(blob) {
-    var reader = new FileReader();
-    reader.onload = function () { finishWithSrc(reader.result); };
-    reader.onerror = function () { smsg('Could not post that. Try again.'); };
-    reader.readAsDataURL(blob);
-  }
-
   if (hasMotion && typeof GIF !== 'undefined') {
     try {
       var blob = await exportAnimatedGIF(sorted, EW, EH, k, bg);
-      blobToSrc(blob);
+      await finishWithBlob(blob, 'gif', 'image/gif');
       return;
     } catch (e) {
       // Animated export failed or timed out — post a still image rather than
@@ -1421,7 +2467,7 @@ async function postPiece() {
 
   try {
     var staticBlob = await exportStaticImage(sorted, EW, EH, k, bg);
-    blobToSrc(staticBlob);
+    await finishWithBlob(staticBlob, 'webp', 'image/webp');
   } catch (e) {
     smsg('Could not post that. Try again.');
   }
@@ -1435,6 +2481,70 @@ $('pickV').addEventListener('change', function (e) {
   Array.prototype.forEach.call(e.target.files, addVideo);
   e.target.value = '';
 });
+
+/* ---- In-app camera: opens a live preview over the board, snaps a still,
+   and drops it in through the same addPhoto() pipeline everything else
+   uses (so it counts against the daily quota and saves into the draft
+   the same way). The stream is stopped the moment the view closes, the
+   view is backgrounded, or Studio is left, so the camera light never
+   stays on longer than the preview is actually up. ---- */
+var camStream = null, camFacing = 'environment';
+
+function showCameraError(msg) {
+  var e = $('camErr');
+  e.textContent = msg;
+  e.hidden = false;
+}
+
+function startCameraStream(facing) {
+  stopCameraStream();
+  $('camErr').hidden = true;
+  if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showCameraError('Camera is not available in this browser.'); return;
+  }
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: facing }, audio: false }).then(function (stream) {
+    camStream = stream;
+    $('camVideo').srcObject = stream;
+  }).catch(function (err) {
+    var msg = (err && err.name === 'NotAllowedError')
+      ? 'Camera access was denied \u2014 allow it for this site in your browser settings.'
+      : 'Could not open the camera. Try again.';
+    showCameraError(msg);
+  });
+}
+function stopCameraStream() {
+  if (camStream) { camStream.getTracks().forEach(function (t) { t.stop(); }); camStream = null; }
+  $('camVideo').srcObject = null;
+}
+function openCamera() {
+  $('cameraView').hidden = false;
+  startCameraStream(camFacing);
+}
+function closeCamera() {
+  stopCameraStream();
+  $('cameraView').hidden = true;
+}
+function flipCamera() {
+  camFacing = camFacing === 'environment' ? 'user' : 'environment';
+  startCameraStream(camFacing);
+}
+function captureCameraPhoto() {
+  var video = $('camVideo');
+  if (!video.videoWidth) { showCameraError('Still loading \u2014 try again in a second.'); return; }
+  var canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+  canvas.toBlob(function (blob) {
+    if (!blob) { showCameraError('Could not capture that. Try again.'); return; }
+    closeCamera();
+    addPhoto(new File([blob], 'camera-' + Date.now() + '.jpg', { type: 'image/jpeg' }));
+  }, 'image/jpeg', 0.92);
+}
+$('camBtn').onclick = openCamera;
+$('camClose').onclick = closeCamera;
+$('camFlip').onclick = flipCamera;
+$('camShutter').onclick = captureCameraPhoto;
+
 function toggleShapePick(show) {
   var open = show !== undefined ? show : $('shapepick').hidden;
   $('shapepick').hidden = !open;
@@ -1448,13 +2558,20 @@ $('shapepick').addEventListener('click', function (e) {
   toggleShapePick(false);
 });
 $('addT').onclick = function () { toggleShapePick(false); addText(); };
-$('bgT').onclick = function () { bg = bg === 'dark' ? 'light' : 'dark'; setBg(); };
+$('bgT').onclick = function () { bg = bg === 'dark' ? 'light' : 'dark'; setBg(); scheduleSaveDraft(); };
+$('snapT').onclick = function () {
+  snapEnabled = !snapEnabled;
+  $('snapT').setAttribute('aria-pressed', snapEnabled ? 'true' : 'false');
+  if (!snapEnabled) { hideGuides(); }
+  showToast(snapEnabled ? 'Snap on.' : 'Snap off — items will stay exactly where you drop them.', 1800);
+};
 $('save').onclick = postPiece;
 $('del').onclick = removeSel;
 $('txt').oninput = function () {
   if (sSel && sSel.type === 'text') {
     sSel.str = $('txt').value || ' ';
     sSel.el.textContent = sSel.str;
+    scheduleSaveDraft();
   }
 };
 cv.addEventListener('pointerdown', function (e) { if (e.target === cv || e.target === $('ph')) { sdeselect(); } });
@@ -1462,9 +2579,50 @@ document.addEventListener('keydown', function (e) {
   if ((e.key === 'Delete' || e.key === 'Backspace') && sSel && document.activeElement.tagName !== 'INPUT') { removeSel(); }
 });
 setBg();
+restoreStudioDraft();
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden') { saveStudioDraftNow(); closeCamera(); }
+});
+window.addEventListener('pagehide', function () { saveStudioDraftNow(); closeCamera(); });
+loadQuota();
+updateQuotaHUD();
+maybeShowTutorialOnFirstRun();
+
+/* ================= Splash ================= */
+/* Rolls up once real boot data is ready (not on a fixed clock) so it never
+   hides early and dumps the user on a blank screen — same bug class Meet Me
+   hit. A max-wait fallback still fires if the backend never responds. */
+var SPLASH_MIN_MS = 1100, SPLASH_MAX_MS = 6000;
+var splashStart = Date.now(), splashDone = false;
+function rollUpSplash() {
+  if (splashDone) { return; }
+  splashDone = true;
+  var s = $('splash');
+  if (!s) { return; }
+  var wait = Math.max(0, SPLASH_MIN_MS - (Date.now() - splashStart));
+  setTimeout(function () {
+    s.classList.add('rollup');
+    s.addEventListener('animationend', function () { s.hidden = true; }, { once: true });
+    setTimeout(function () { s.hidden = true; }, 1200); // fallback if animationend never fires
+  }, wait);
+}
+setTimeout(rollUpSplash, SPLASH_MAX_MS);
 
 /* ================= Boot ================= */
-loadPieces().then(function (list) { pieces = list; render(); });
+registerSW();
+initBackend()
+  .then(function () { return loadPieces(); })
+  .then(function (list) { pieces = list; render(); paintYou(); rollUpSplash(); refreshUnreadCount(); })
+  .catch(function (e) {
+    console.error(e);
+    var feed = $('feed');
+    feed.innerHTML = '';
+    var box = el('div', 'empty');
+    box.appendChild(el('h2', '', 'Could not connect.'));
+    box.appendChild(el('p', '', 'Check your connection and reload the page.'));
+    feed.appendChild(box);
+    rollUpSplash();
+  });
 </script>
 </body>
 </html>
